@@ -1,6 +1,6 @@
 # LocModel 镜像补丁工具 locmodel_patch.exe
 
-> **适用版本**：LocModel 2.1.0 · Windows 10 / Windows 11
+> **适用版本**：LocModel 2.1.0 ✅ · LocModel 3.1.0 ✅（两版均已本机实测） · Windows 10 / Windows 11
 >
 > LocModel 在国内网络下无法直连 `huggingface.co`，导致模型列表拉不到、模型下载失败。
 > 本工具把配置文件里的 `custom_mirror` 切换到 `https://hf-mirror.com`，单文件 exe，目标机无需安装任何运行库。
@@ -145,3 +145,20 @@ C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 
 附加验证：便携模式（exe 同目录放 `settings.json`）自动命中并修改成功；`--help` 正常输出，退出码 0。
 全程使用 `--no-process` 与 `--no-restart`，真实配置文件与正在运行的 LocModel 进程均未被触碰。
+
+---
+
+## 八、LocModel 3.1.0 兼容性验证（2026-11-09）
+
+**结论：LocModel 从 2.1.0 升级到 3.1.0 后，本补丁无需任何修改，原程序仍可正常使用。3.1.0 版经测试仍可使用。**
+
+| 核验项 | 2.1.0 | 3.1.0 实测 | 判定 |
+|---|---|---|---|
+| `custom_mirror` 字段 | 存在 | 仍存在，值 `https://hf-mirror.com` 在程序回写配置后仍被保留 | 有效 |
+| 程序内镜像常量 | 内置 `hf-mirror.com` | 仍内置 | 有效 |
+| `HF_ENDPOINT` 支持 | 不支持 | 仍不支持 | 无变化 |
+| 直连 huggingface.co | 超时 | 仍不通：DNS 污染至 199.59.148.8，curl 12.0s 超时（code=000） | 仍不通 |
+| hf-mirror.com | HTTP 200 | HTTP 200 / 1.02s，模型列表与仓库接口均 200，Range 请求 206 | 仍可用 |
+| 真实下载链路 | 走镜像 | 抓包见连接 `65.9.168.32/58:443`，证书 `CN=cas-bridge.xethub.hf.co`，SNI `huggingface.co` 被 RST | 有效 |
+
+3.1.0 新增的 `hf_mirror`（默认 `member`）、多线路优选（`accel_lines`、`preferred_line`）、`NEED_ACCEL` 会员限制均不影响本补丁：未开通会员时会员线路接口返回 404，程序自动回落 `custom_mirror` 兜底，补丁继续生效。配置文件位置未变：`%LOCALAPPDATA%\LocModel\settings.json`，用法与参数无需任何调整。

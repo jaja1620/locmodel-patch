@@ -4,6 +4,9 @@
 >
 > LocModel 在国内网络下无法直连 `huggingface.co`，导致模型列表拉不到、模型下载失败。
 > 本工具把配置文件里的 `custom_mirror` 切换到 `https://hf-mirror.com`，单文件 exe，目标机无需安装任何运行库。
+> 使用时，经实测，打开locmodel后点击下载，如果下载过程中报错或开始就报错，不要点重试，
+> 直接退出locmodel重新打开程序，中途断掉的可以续传，有的模型多次报错就关掉程序在重开再试就可成功。镜像连接后的速率
+> 一般在25-90MB/s。
 
 把 LocModel 配置文件 `settings.json` 中的 `custom_mirror` 字段改为 `https://hf-mirror.com`，
 解决国内网络下 LocModel「网络无法连接」、拉不到模型列表、模型下载失败的问题。

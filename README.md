@@ -119,7 +119,7 @@ v2.2 做的事：
 
 ### 6.1 获取与运行
 
-1. 从 [Releases](https://github.com/jaja1620/locmodel-patch/releases) 下载 `LocModel下载器_v2.2.exe`（或直接用仓库内 `v2.2/LocModel下载器_v2.2.exe`）。
+1. 从 [Releases](https://github.com/jaja1620/locmodel-patch/releases) 下载 `LocModel-Downloader-v2.2.exe`（Release 资产用 ASCII 名以避免中文乱码；仓库内源码目录同名文件为 `v2.2/LocModel下载器_v2.2.exe`）。
 2. 双击运行，无需安装、无需运行库（Windows 10/11 自带 .NET Framework 4.8）。
 3. 建议放在一个固定目录（例如 `D:\Tools\LocModelDownloader\`），因为站点配置就存在 exe 同目录。
 
@@ -255,7 +255,7 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 | Release | 资产 |
 | --- | --- |
 | `v1.0.0` | `locmodel_patch.exe`、`locmodel_patch.cs`、`README.md`（原文） |
-| `v2.2.0` | `LocModel下载器_v2.2.exe`、中文使用说明、English README、源码 zip |
+| `v2.2.0` | `LocModel-Downloader-v2.2.exe`、中文使用说明 `README_zh-CN.md`、English README `README_EN.md`、源码 `locmodel-downloader-v2.2-src.zip` |
 
 ---
 

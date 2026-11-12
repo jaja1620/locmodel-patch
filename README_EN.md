@@ -118,7 +118,7 @@ In one sentence: **v1.0 makes LocModel walk the mirror; v2.2 becomes the downloa
 
 ### 6.1 Get and run
 
-1. Download `LocModel下载器_v2.2.exe` from [Releases](https://github.com/jaja1620/locmodel-patch/releases) (or use `v2.2/LocModel下载器_v2.2.exe` in the repo).
+1. Download `LocModel-Downloader-v2.2.exe` from [Releases](https://github.com/jaja1620/locmodel-patch/releases) (the release asset uses an ASCII name to avoid mojibake; the in-repo binary is `v2.2/LocModel下载器_v2.2.exe`).
 2. Double-click. No installation, no runtime install (Windows 10/11 ships .NET Framework 4.8).
 3. Keep it in a stable folder (e.g. `D:\Tools\LocModelDownloader\`) — the site config file lives next to the exe.
 
@@ -254,7 +254,7 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 | Release | Assets |
 | --- | --- |
 | `v1.0.0` | `locmodel_patch.exe`, `locmodel_patch.cs`, `README.md` (original) |
-| `v2.2.0` | `LocModel下载器_v2.2.exe`, Chinese manual, English README, source zip |
+| `v2.2.0` | `LocModel-Downloader-v2.2.exe`, Chinese manual `README_zh-CN.md`, English README `README_EN.md`, source `locmodel-downloader-v2.2-src.zip` |
 
 ---
 

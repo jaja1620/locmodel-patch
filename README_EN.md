@@ -29,6 +29,7 @@
 | --- | --- | --- | --- | --- |
 | **v1.0.0** | Single-file console patch `locmodel_patch.exe` (18 KB) | Rewrites `custom_mirror` in `settings.json` to `https://hf-mirror.com` so LocModel's own download page goes through the mirror | Tries a graceful close before editing, can restart afterwards | Verified on LocModel 2.1.0 ✅ / 3.1.0 ✅ |
 | **v2.2.0** | Single-file GUI downloader `LocModel下载器_v2.2.exe` (88 KB) | Standalone downloader covering all 28 LocModel models; custom download sites (multiple) with automatic speed probing and best-line selection | Not required; it only reads/writes the same model directory | Verified on LocModel 3.1.0 ✅ (**not tested on 2.1.0**) |
+| **v2.2.1** | Single-file GUI downloader `LocModel下载器_v2.2.1.exe` (89 KB) | Bug-fix release for v2.2.0: fixes the endless `校验失败(数组维度超过了支持的范围。)` loop on model files larger than 2 GiB, which deleted the finished `.part` and restarted from zero | Same as v2.2.0 | Verified on LocModel 3.1.0 ✅ (**not tested on 2.1.0**) |
 
 The two versions do not conflict:
 

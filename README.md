@@ -3,7 +3,7 @@
 **简体中文** | [English](README_EN.md)
 
 > LocModel 在国内网络下无法直连 `huggingface.co`，表现为模型列表拉不到、模型下载直接失败。
-> 本仓库提供两条互补的解决方案：**v1.0 镜像补丁**（改一行配置，让 LocModel 本体走镜像）与 **v2.2 独立下载器**（自带 GUI 的完整下载器，不改动 LocModel，多站点自动测速择优）。
+> 本仓库提供两条互补的解决方案：**v1.0 镜像补丁**（改一行配置，让 LocModel 本体走镜像）与 **v2.3 独立下载器**（自带 GUI 的完整下载器，不改动 LocModel，多站点自动测速择优，支持 LocModel 3.3 / 3.1 双版本切换）。
 
 ---
 
@@ -12,7 +12,7 @@
 - [一、版本矩阵（本仓库有什么）](#一版本矩阵本仓库有什么)
 - [二、问题是什么](#二问题是什么)
 - [三、v1.0 的设计思路：补丁派](#三v10-的设计思路补丁派)
-- [四、v2.2 的设计思路：独立器派](#四v22-的设计思路独立器派)
+- [四、v2.2 / v2.3 的设计思路：独立器派](#四v22-的设计思路独立器派)
 - [五、v2.2 与 v1.0 的设计差别与原因](#五v22-与-v10-的设计差别与原因)
 - [六、v2.2 使用方法（详尽）](#六v22-使用方法详尽)
 - [七、v1.0 使用方法（保留）](#七v10-使用方法保留)
@@ -31,6 +31,7 @@
 | **v1.0.0** | 单文件控制台补丁 `locmodel_patch.exe`（18 KB） | 把 `settings.json` 的 `custom_mirror` 改成 `https://hf-mirror.com`，让 LocModel 自己的下载页走镜像 | 改配置时会尝试正常关闭，改完可自动重启 | 已验证 LocModel 2.1.0 ✅ / 3.1.0 ✅ |
 | **v2.2.0** | 单文件图形下载器 `LocModel下载器_v2.2.exe`（88 KB） | 独立下载器，覆盖 LocModel 全部 28 个模型；自定义多个下载站点，下载前自动测速择优 | 不需要 LocModel 运行，只读写同一模型目录 | 已验证 LocModel 3.1.0 ✅（**未在 2.1.0 测试**） |
 | **v2.2.1** | 单文件图形下载器 `LocModel下载器_v2.2.1.exe`（89 KB） | v2.2.0 的缺陷修复版：修掉 >2 GiB 模型「校验失败(数组维度超过了支持的范围。)」后反复丢弃半成品的死循环 | 同 v2.2.0 | 已验证 LocModel 3.1.0 ✅（**未在 2.1.0 测试**） |
+| **v2.3.0** | 单文件图形下载器 `LocModel下载器_v2.3.exe`（101 KB） | v2.2.1 的能力扩展版：新增「LocModel 版本选择」（默认 3.3，可切回 3.1），覆盖 3.3 的 29 个模型（图像/视频 13 + 语言/推理 16），适配 3.3 新增的 `accel_lines` 等配置与 LoRA 目录。**下载/校验/续传内核与 v2.2.1 完全相同，未改一行** | 同 v2.2.0 | 已验证 LocModel 3.3.0 ✅ / 3.1.0 ✅ |
 
 两个版本**互不冲突**，可以同时存在：
 
@@ -73,7 +74,7 @@ LocModel 的模型下载链路写死了 HuggingFace 官方域名：
 
 ---
 
-## 四、v2.2 的设计思路：独立器派
+## 四、v2.2 / v2.3 的设计思路：独立器派
 
 **核心判断：本体不提供任何可编程入口，下载逻辑也封在 exe 里改不动，那就绕开本体，自己写一个只做下载的 GUI，直接往同一个模型目录写文件。**
 
@@ -95,6 +96,30 @@ v2.2 做的事：
 3. 自定义下载站点（v2.2 新增）：界面顶部输入栏默认预填 `https://hf-mirror.com`，可填多个自有镜像；下载前自动对每个站点测速（并发 3、单站 Range 实读 256 KB、超时 8 秒），按实测速度排序，**用最快的线路下载**，失败自动降级到下一名。
 4. 下载链路加固：HEAD 预检换版、`.part` + `.part.meta` 断点续传、416 自愈、临时目录隔离、校验阶梯（长度 → HTML 错误页 → GGUF 魔数 / safetensors 头长 → SHA-256）、成功线路记忆提前。
 5. 全程不修改 LocModel：不 patch、不注入、不改注册表，只读写模型目录与自己的配置文件。
+
+### 4.1 v2.3 的改动：LocModel 版本选择（3.3 / 3.1）
+
+LocModel 3.3.0 把模型清单和配置结构都改了一批（新增 `minimax-h3-image`、`settings.json` 多了 `accel_lines` / `account_base` / `comfy_dir` / `images_dir` 等字段、`hf_mirror` 从 URL 变成枚举值 `member`、引擎配置从 `engines.json` 移到 `engines\engine.json`）。v2.3 的做法是**加一层版本适配层，而不是改内核**：
+
+| 变化点 | 3.1 | 3.3 | v2.3 的处理 |
+| --- | --- | --- | --- |
+| 模型总数 | 28（图像 6 + 视频 6 + 语言/推理 16） | 29（图像/视频 13 + 语言/推理 16） | 版本下拉切换后重载清单，3.3 增加 `minimax-h3-image` |
+| 版本识别 | — | — | 读 `LocModel.exe` 文件版本号 + 配置里的 `accel_lines` 双重判断，界面顶部显示探测结果 |
+| `hf_mirror` | URL 字符串 | 枚举 `member` / `custom` | 3.3 下不再把 `hf_mirror` 当镜像地址用，改读 `custom_mirror` 与 `accel_lines` |
+| 镜像线路 | 内置 4 条 | 内置 4 条 + `accel_lines`（会员线路） | `accel_lines` 注入到 catalog 探测线路，下载线路表不变 |
+| LoRA | 无 | 新增 `{目录}\image\loras` | 只识别、显示该目录，**不纳入下载管理**（3.3 的 LoRA 走自己的 `/sdapi/v1/loras` 入口） |
+| `comfy_dir` | 无 | ComfyUI 目录（可能为空） | 只读识别，为空时提示，**绝不自动改写用户配置** |
+| 临时目录 | 无 | `{目录}\_locmodel_dl_tmp`（3.3 自用） | 下载器改用 `{目录}\_locmodel_dl_tmp\lmv23`，避开本体临时文件 |
+
+**内核零改动的边界**：`Downloader.cs`（HEAD 预检、`.part` + `.part.meta` 续传、416 自愈、镜像轮换、卡死检测、SHA-256 校验、>2 GiB 校验修复）与 `SiteProbe.cs`（站点解析与测速）在两个版本中**字节级完全一致**，v2.3 只在其外围新增 `LocModelProfile.cs` 适配层并改动 UI 与清单来源。
+
+界面顶部新增一行：
+
+```
+LocModel 版本：[ 3.3（默认） v ]   探测：D:\...\LocModel.exe · 3.3.0        （切换后自动重载清单与目录规则）
+```
+
+版本选择由下载器自己记在 exe 同目录的 `LocModel下载器_版本配置.txt` 里，**不写进 LocModel 的 `settings.json`**，所以切版本不会影响本体行为。
 
 ---
 
@@ -203,6 +228,7 @@ locmodel_patch.exe --path "..."    # 指定 settings.json 路径或其目录
 | 项目 | 测试结论 |
 | --- | --- |
 | **v2.2.0 下载器** | **仅在 LocModel 3.1.0 上实测通过；未在 LocModel 2.1.0 上测试。** 2.1.0 环境的目录规范、配置字段是否完全一致未经验证，请自行评估后再用 |
+| **v2.3.0 下载器** | **LocModel 3.3.0 ✅ 本机实测**（29 个模型、13 条图像/视频清单与 exe 内嵌 catalog 逐条比对一致）；切到 3.1 档位后与 v2.2.1 的 28 个模型清单一致 |
 | **v1.0.0 补丁** | LocModel 2.1.0 ✅ 与 3.1.0 ✅ 均本机实测通过 |
 | 操作系统 | Windows 10 / 11（.NET Framework 4.8，系统自带） |
 | 网络 | `hf-mirror.com` 可用；`huggingface.co` 在本机 DNS 受限，仅作最后兜底 |
@@ -212,6 +238,18 @@ locmodel_patch.exe --path "..."    # 指定 settings.json 路径或其目录
 ---
 
 ## 九、验证记录
+
+**v2.3 升级验证（LocModel 3.3.0 适配）**
+
+| 项 | 内容 | 结果 |
+| --- | --- | --- |
+| 版本探测 | 3.3.0 安装于 `D:\Users\jiasi\AppData\Local\LocModel`，配置在 `%LOCALAPPDATA%\LocModel\settings.json`，模型目录 `F:\AI-Models` | 与 3.1 定位规则一致，无需改定位逻辑 |
+| 清单解析 | 从 `LocModel.exe` 内嵌字符串解析图像/视频条目，与内置快照 diff | 解析 11 条命中、刷新 4 条、新增 0、移除 0，最终 13 条与 3.3 实际一致（新增 `minimax-h3-image`） |
+| 文件名解析 | 6 个代表模型走 HF siblings 解析真实文件名（含双文件模型 wan2.2-i2v-a14b、多依赖 ltx-2.3） | 6/6 全部命中，含 `minimax_h3_image_pruned-Q3_K_M.gguf` |
+| 界面自检 | `--selftest` 在 3.3 档位 / 3.1 档位分别运行 | 3.3：29 项（图像 7 + 视频 6 + 语言 16）；3.1：28 项（图像 6 + 视频 6 + 语言 16） |
+| 内核回归 | 用 v2.3 源码重编 `Test24` 跑断点续传与超大文件校验 | 跨进程续传 10/10 PASS、8–100 GiB 校验 5/5 PASS；连接级中断用例（B 组）v2.2.1 与 v2.3 输出**完全一致**，属测试服务器与 .NET 交互的既有行为，非本次改动引入 |
+| 端到端 | 真实网络下载 `minimax-h3-image` 的主模型 + 共享组件 | 主模型 8.77 GB、共享组件 18.22 GB 均完整落盘并通过校验，落盘位置符合 `image\{id}\` 与 `image\common\` 规则 |
+| 内核一致性 | `Downloader.cs` / `SiteProbe.cs` 与 v2.2.1 比对 | SHA-256 一致，未改一字 |
 
 **v2.2.1 缺陷修复（用户反馈：16.8 GB 模型下到 100% 后报「校验失败(数组维度超过了支持的范围。)」，删掉半成品从头再下，如此反复）**
 
@@ -250,6 +288,15 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 
   v2.2\src\Downloader.cs v2.2\src\CatalogService.cs v2.2\src\Models.cs v2.2\src\MainForm.cs v2.2\src\SiteProbe.cs
 ```
 
+**v2.3 下载器**（多一个 `LocModelProfile.cs`）：
+
+```bat
+c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 /target:winexe ^
+  /out:LocModel下载器_v2.3.exe ^
+  /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Core.dll ^
+  v2.3\src\Downloader.cs v2.3\src\CatalogService.cs v2.3\src\Models.cs v2.3\src\LocModelProfile.cs v2.3\src\MainForm.cs v2.3\src\SiteProbe.cs
+```
+
 **v1.0 补丁**：
 
 ```bat
@@ -268,6 +315,8 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 | --- | --- |
 | `v1.0.0` | `locmodel_patch.exe`、`locmodel_patch.cs`、`README.md`（原文） |
 | `v2.2.0` | `LocModel-Downloader-v2.2.exe`、中文使用说明 `README_zh-CN.md`、English README `README_EN.md`、源码 `locmodel-downloader-v2.2-src.zip` |
+| `v2.2.1` | `LocModel-Downloader-v2.2.1.exe`、源码 `locmodel-downloader-v2.2.1-src.zip`、说明 `RELEASE_NOTES_v2.2.1.md` |
+| `v2.3.0` | `LocModel-Downloader-v2.3.exe`、源码 `locmodel-downloader-v2.3-src.zip`、说明 `RELEASE_NOTES_v2.3.md` |
 
 ---
 

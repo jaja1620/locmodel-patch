@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | **English**
 
-> LocModel cannot reach `huggingface.co` from mainland China. Symptoms: the model list stays empty and downloads fail outright. This repository ships two complementary solutions: **v1.0 mirror patch** (flip one config field so LocModel itself uses a mirror) and **v2.2 standalone downloader** (full GUI downloader that never touches LocModel, with multi-site speed probing and automatic best-line selection).
+> LocModel cannot reach `huggingface.co` from mainland China. Symptoms: the model list stays empty and downloads fail outright. This repository ships two complementary solutions: **v1.0 mirror patch** (flip one config field so LocModel itself uses a mirror) and **v2.3 standalone downloader** (full GUI downloader that never touches LocModel, with multi-site speed probing, automatic best-line selection, and a LocModel 3.3 / 3.1 version switch).
 
 ---
 
@@ -11,7 +11,7 @@
 - [1. Version matrix](#1-version-matrix)
 - [2. The problem](#2-the-problem)
 - [3. v1.0 design: the patch approach](#3-v10-design-the-patch-approach)
-- [4. v2.2 design: the standalone-downloader approach](#4-v22-design-the-standalone-downloader-approach)
+- [4. v2.2 / v2.3 design: the standalone-downloader approach](#4-v22-design-the-standalone-downloader-approach)
 - [5. Design differences between v2.2 and v1.0, and why](#5-design-differences-between-v22-and-v10-and-why)
 - [6. v2.2 usage (detailed)](#6-v22-usage-detailed)
 - [7. v1.0 usage (still available)](#7-v10-usage-still-available)
@@ -30,6 +30,7 @@
 | **v1.0.0** | Single-file console patch `locmodel_patch.exe` (18 KB) | Rewrites `custom_mirror` in `settings.json` to `https://hf-mirror.com` so LocModel's own download page goes through the mirror | Tries a graceful close before editing, can restart afterwards | Verified on LocModel 2.1.0 ✅ / 3.1.0 ✅ |
 | **v2.2.0** | Single-file GUI downloader `LocModel下载器_v2.2.exe` (88 KB) | Standalone downloader covering all 28 LocModel models; custom download sites (multiple) with automatic speed probing and best-line selection | Not required; it only reads/writes the same model directory | Verified on LocModel 3.1.0 ✅ (**not tested on 2.1.0**) |
 | **v2.2.1** | Single-file GUI downloader `LocModel下载器_v2.2.1.exe` (89 KB) | Bug-fix release for v2.2.0: fixes the endless `校验失败(数组维度超过了支持的范围。)` loop on model files larger than 2 GiB, which deleted the finished `.part` and restarted from zero | Same as v2.2.0 | Verified on LocModel 3.1.0 ✅ (**not tested on 2.1.0**) |
+| **v2.3.0** | Single-file GUI downloader `LocModel下载器_v2.3.exe` (101 KB) | Capability extension of v2.2.1: adds a **LocModel version selector** (3.3 by default, switchable back to 3.1), covers all 29 models of 3.3 (13 image/video + 16 text/reasoning), and adapts to the new 3.3 settings such as `accel_lines` and the LoRA directory. **The download / verification / resume core is byte-for-byte identical to v2.2.1** | Same as v2.2.0 | Verified on LocModel 3.3.0 ✅ / 3.1.0 ✅ |
 
 The two versions do not conflict:
 
@@ -72,7 +73,7 @@ Cost: **the ceiling is set by LocModel itself.** Only one mirror; no speed probi
 
 ---
 
-## 4. v2.2 design: the standalone-downloader approach
+## 4. v2.2 / v2.3 design: the standalone-downloader approach
 
 **Core judgement: LocModel exposes no programmable entry point and its download logic is sealed inside the exe, so bypass it entirely — write a download-only GUI that writes into the same model directory.**
 
@@ -94,6 +95,30 @@ What v2.2 does:
 3. **Custom download sites (new in v2.2)**: a site input bar at the top, pre-filled with `https://hf-mirror.com`, accepting multiple mirrors. Before each download it probes every site (3 in parallel, 256 KB real Range read per site, 8 s timeout), ranks them by measured speed and **downloads over the fastest line**, falling back to the next on failure.
 4. Download hardening: HEAD pre-check for version changes, `.part` + `.part.meta` resume, 416 self-healing, isolated temp directory, verification ladder (length → HTML error page → GGUF magic / safetensors header → SHA-256), and success-line promotion.
 5. It never modifies LocModel: no patching, no injection, no registry changes — only model files and its own config.
+
+### 4.1 Changes in v2.3: LocModel version selector (3.3 / 3.1)
+
+LocModel 3.3.0 changed both the model catalog and the config layout (new `minimax-h3-image`; `settings.json` gained `accel_lines`, `account_base`, `comfy_dir`, `images_dir`, `imported`, `perf_*`; `hf_mirror` turned from a URL into the enum value `member`; engine config moved from `engines.json` to `engines\engine.json`). v2.3 adds **a version adaptation layer instead of touching the core**:
+
+| Change | 3.1 | 3.3 | How v2.3 handles it |
+| --- | --- | --- | --- |
+| Model count | 28 (6 image + 6 video + 16 text) | 29 (13 image/video + 16 text) | The catalog is reloaded when the selector changes; 3.3 adds `minimax-h3-image` |
+| Version detection | — | — | File version of `LocModel.exe` plus `accel_lines` in the config; the detected result is shown at the top of the window |
+| `hf_mirror` | URL string | Enum `member` / `custom` | Under 3.3 it is no longer treated as a mirror URL; `custom_mirror` and `accel_lines` are used instead |
+| Mirror lines | 4 built-in | 4 built-in + `accel_lines` (membership lines) | `accel_lines` is injected into the catalog probe list; the download line table is unchanged |
+| LoRA | none | new `{dir}\image\loras` | Recognized and displayed only, **never managed for download** (3.3 exposes LoRA through its own `/sdapi/v1/loras`) |
+| `comfy_dir` | none | ComfyUI directory (may be empty) | Read-only detection with a hint when empty; the user config is **never rewritten** |
+| Temp directory | none | `{dir}\_locmodel_dl_tmp` (used by 3.3 itself) | The downloader uses `{dir}\_locmodel_dl_tmp\lmv23` so it never collides with the host app |
+
+**Zero-change boundary for the core**: `Downloader.cs` (HEAD pre-check, `.part` + `.part.meta` resume, 416 self-healing, mirror rotation, stall detection, SHA-256 verification, the >2 GiB verification fix) and `SiteProbe.cs` (site parsing and speed probing) are **byte-for-byte identical** across the two versions. v2.3 only adds the `LocModelProfile.cs` layer around them and adjusts the UI and catalog source.
+
+A new row at the top of the window:
+
+```
+LocModel version: [ 3.3 (default) v ]   Detected: D:\...\LocModel.exe · 3.3.0    (reloads catalog and directory rules on change)
+```
+
+The selection is stored by the downloader itself in `LocModel下载器_版本配置.txt` next to the exe — **never in LocModel's `settings.json`** — so switching versions cannot affect the host app.
 
 ---
 
@@ -202,6 +227,7 @@ Note: since 3.1.0, a failed download makes LocModel rewrite `custom_mirror` back
 | Item | Result |
 | --- | --- |
 | **v2.2.0 downloader** | **Tested only on LocModel 3.1.0; NOT tested on LocModel 2.1.0.** Whether 2.1.0 shares the same directory layout and config fields was not verified — evaluate before use |
+| **v2.3.0 downloader** | **Verified on LocModel 3.3.0 ✅** locally (29 models; the 13 image/video entries match the catalog embedded in the exe one by one); switching to the 3.1 profile reproduces the 28-model catalog of v2.2.1 |
 | **v1.0.0 patch** | Verified on both LocModel 2.1.0 ✅ and 3.1.0 ✅ |
 | OS | Windows 10 / 11 (.NET Framework 4.8, bundled) |
 | Network | `hf-mirror.com` reachable; `huggingface.co` DNS-restricted on the test machine, used only as a last fallback |
@@ -238,6 +264,15 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 
   v2.2\src\Downloader.cs v2.2\src\CatalogService.cs v2.2\src\Models.cs v2.2\src\MainForm.cs v2.2\src\SiteProbe.cs
 ```
 
+**v2.3 downloader** (one extra file, `LocModelProfile.cs`):
+
+```bat
+c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 /target:winexe ^
+  /out:LocModel下载器_v2.3.exe ^
+  /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Core.dll ^
+  v2.3\src\Downloader.cs v2.3\src\CatalogService.cs v2.3\src\Models.cs v2.3\src\LocModelProfile.cs v2.3\src\MainForm.cs v2.3\src\SiteProbe.cs
+```
+
 **v1.0 patch**:
 
 ```bat
@@ -256,6 +291,8 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 | --- | --- |
 | `v1.0.0` | `locmodel_patch.exe`, `locmodel_patch.cs`, `README.md` (original) |
 | `v2.2.0` | `LocModel-Downloader-v2.2.exe`, Chinese manual `README_zh-CN.md`, English README `README_EN.md`, source `locmodel-downloader-v2.2-src.zip` |
+| `v2.2.1` | `LocModel-Downloader-v2.2.1.exe`, source `locmodel-downloader-v2.2.1-src.zip`, notes `RELEASE_NOTES_v2.2.1.md` |
+| `v2.3.0` | `LocModel-Downloader-v2.3.exe`, source `locmodel-downloader-v2.3-src.zip`, notes `RELEASE_NOTES_v2.3.md` |
 
 ---
 

@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | **English**
 
-> LocModel cannot reach `huggingface.co` from mainland China. Symptoms: the model list stays empty and downloads fail outright. This repository ships two complementary solutions: **v1.0 mirror patch** (flip one config field so LocModel itself uses a mirror) and **v2.3 standalone downloader** (full GUI downloader that never touches LocModel, with multi-site speed probing, automatic best-line selection, and a LocModel 3.3 / 3.1 version switch).
+> LocModel cannot reach `huggingface.co` from mainland China. Symptoms: the model list stays empty and downloads fail outright. This repository ships two complementary solutions: **v1.0 mirror patch** (flip one config field so LocModel itself uses a mirror) and **v2.4.2 standalone downloader** (full GUI downloader that never touches LocModel, with multi-site speed probing, automatic best-line selection, a LocModel **3.5 / 3.3 / 3.1** version switch, and an in-app **online search that can download models from any Hugging Face repo**).
 
 ---
 
@@ -31,6 +31,8 @@
 | **v2.2.0** | Single-file GUI downloader `LocModel下载器_v2.2.exe` (88 KB) | Standalone downloader covering all 28 LocModel models; custom download sites (multiple) with automatic speed probing and best-line selection | Not required; it only reads/writes the same model directory | Verified on LocModel 3.1.0 ✅ (**not tested on 2.1.0**) |
 | **v2.2.1** | Single-file GUI downloader `LocModel下载器_v2.2.1.exe` (89 KB) | Bug-fix release for v2.2.0: fixes the endless `校验失败(数组维度超过了支持的范围。)` loop on model files larger than 2 GiB, which deleted the finished `.part` and restarted from zero | Same as v2.2.0 | Verified on LocModel 3.1.0 ✅ (**not tested on 2.1.0**) |
 | **v2.3.0** | Single-file GUI downloader `LocModel下载器_v2.3.exe` (101 KB) | Capability extension of v2.2.1: adds a **LocModel version selector** (3.3 by default, switchable back to 3.1), covers all 29 models of 3.3 (13 image/video + 16 text/reasoning), and adapts to the new 3.3 settings such as `accel_lines` and the LoRA directory. **The download / verification / resume core is byte-for-byte identical to v2.2.1** | Same as v2.2.0 | Verified on LocModel 3.3.0 ✅ / 3.1.0 ✅ |
+| **v2.4.0 / v2.4.1** | Single-file GUI downloader (166 KB) | Adds **online model search & download** (search any Hugging Face repo, pick files, then download through the same local kernel: custom sites, speed probing, resume and verification all reused) plus **GGUF quantization conversion** (fetch source weights, convert locally). **Kernel byte-identical to v2.3** | Same as v2.2.0 | Verified on LocModel 3.3.0 ✅ / 3.1.0 ✅ (sources and baseline exe kept in `v2.4.1/`) |
+| **v2.4.2** | Single-file GUI downloader `LocModel下载器_v2.4.2.exe` (176 KB) | Version-adaptation release of v2.4.1: adds **LocModel 3.5 support (default profile)** while 3.3 / 3.1 stay selectable; adapts to the 19-field 3.5 catalog, Unsloth Dynamic quants and new settings (`hf_token`, `accel_nodes`, ...); detail panel gains a “Model spec: 180B (active 6B) · context 256K · 48 layers” line; detects in-place `.part` files left by 3.5 (report only). **Kernel byte-for-byte identical to v2.2.1 / v2.3 / v2.4.1** | Same as v2.2.0 | Verified on LocModel 3.5.0 ✅ / 3.3.0 ✅ / 3.1.0 ✅ (catalog self-check) |
 
 The two versions do not conflict:
 
@@ -119,6 +121,31 @@ LocModel version: [ 3.3 (default) v ]   Detected: D:\...\LocModel.exe · 3.3.0  
 ```
 
 The selection is stored by the downloader itself in `LocModel下载器_版本配置.txt` next to the exe — **never in LocModel's `settings.json`** — so switching versions cannot affect the host app.
+
+---
+
+### 4.2 Changes in v2.4.2: online search download + LocModel 3.5 support (3.5 / 3.3 / 3.1)
+
+**(1) What v2.3 did not have: download models found by custom search.** The built-in catalog only lists LocModel's own 29 models. v2.4.x adds an in-app **online search**: type a keyword, search Hugging Face repos, pick a repo, list its files (`.gguf` quants and `mmproj` vision projectors included) and download them through the **same local kernel** — custom sites, speed probing, resume, SHA-256 verification and mirror rotation all apply to any repo. New files: `HubBrowserForm.cs` / `HubSearch.cs` / `HubUrlMapper.cs`, plus GGUF quantization conversion (`ConvertService.cs` + `RepoQuants.cs`).
+
+**(2) v2.4.2's version adaptation: LocModel 3.5.**
+
+| Change | 3.3 | 3.5 | How v2.4.2 handles it |
+| --- | --- | --- | --- |
+| Catalog fields | 10 | **19** (adds `params_b` / `active_b` / `layers` / `kv_layers` / `kv_heads` / `head_dim` / `experts` / `experts_used` / `ctx_max`) | Parser covers all 19, degrades gracefully on gaps; specs feed both the detail panel and internal validation |
+| Quant naming | `Q2_K … Q8_0` | **Unsloth Dynamic**: `UD-Q2_K_XL … UD-Q8_K_XL` (`F16` for `gpt-oss`) | No more hard-coded quant names; files are resolved from the actual repo listing |
+| `settings.json` | 20+ fields | **36 fields**, adding `hf_token` / `github_mirror` / `accel_nodes` / `preferred_line` / `preferred_ip` | Read-only; `hf_token` is sent only when connecting directly to `huggingface.co`, never to `hf-mirror.com`, and is masked in logs |
+| Partial downloads | `_locmodel_dl_tmp\lmv23\*.part` | in-place `<file>.part` + `.part.meta` | New `HalfPartScan.cs` reports "unfinished download N MB" — **report only, no takeover, no deletion, no resume** |
+| Image/video catalog | 13 entries | 13 entries (unchanged) | Embedded snapshot is authoritative; exe parsing is used only for existence checks, avoiding the old parser's 2 missing entries and misattributed VAE repos |
+| On-disk layout | `{dir}\{org}__{repo}`, `{dir}\image\{slug}`, `{dir}\image\common` | unchanged | unchanged; slug mapping pinned (`flux.1-schnell → flux1-schnell`, ...) to match LocModel's own folders |
+
+**Kernel-unchanged boundary**: `Downloader.cs` (SHA-256 prefix `313DC3B74651`) and `SiteProbe.cs` (`1915B5167DD4`) are byte-for-byte identical across v2.2.1 / v2.3 / v2.4.1 / v2.4.2, and `HubBrowserForm.cs` / `HubSearch.cs` / `HubUrlMapper.cs` / `RepoQuants.cs` are untouched from v2.4.1 to v2.4.2. Changes are confined to `LocModelProfile.cs` (version diff table), `CatalogService.cs` (catalog parsing / slugs / snapshot authority), `Models.cs` (spec fields), `MainForm.cs` (UI) and the new `HalfPartScan.cs`.
+
+The header now reads:
+
+```
+LocModel 版本：[ 3.5（默认） v ]   探测：D:\...\LocModel.exe · 3.5.0        (switching reloads the catalog and folder rules)
+```
 
 ---
 

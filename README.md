@@ -3,7 +3,7 @@
 **简体中文** | [English](README_EN.md)
 
 > LocModel 在国内网络下无法直连 `huggingface.co`，表现为模型列表拉不到、模型下载直接失败。
-> 本仓库提供两条互补的解决方案：**v1.0 镜像补丁**（改一行配置，让 LocModel 本体走镜像）与 **v2.3 独立下载器**（自带 GUI 的完整下载器，不改动 LocModel，多站点自动测速择优，支持 LocModel 3.3 / 3.1 双版本切换）。
+> 本仓库提供两条互补的解决方案：**v1.0 镜像补丁**（改一行配置，让 LocModel 本体走镜像）与 **v2.4.2 独立下载器**（自带 GUI 的完整下载器，不改动 LocModel，多站点自动测速择优，支持 LocModel **3.5 / 3.3 / 3.1** 三版本切换，并可在界面里**在线搜索任意 Hugging Face 仓库的模型直接下载**）。
 
 ---
 
@@ -32,6 +32,8 @@
 | **v2.2.0** | 单文件图形下载器 `LocModel下载器_v2.2.exe`（88 KB） | 独立下载器，覆盖 LocModel 全部 28 个模型；自定义多个下载站点，下载前自动测速择优 | 不需要 LocModel 运行，只读写同一模型目录 | 已验证 LocModel 3.1.0 ✅（**未在 2.1.0 测试**） |
 | **v2.2.1** | 单文件图形下载器 `LocModel下载器_v2.2.1.exe`（89 KB） | v2.2.0 的缺陷修复版：修掉 >2 GiB 模型「校验失败(数组维度超过了支持的范围。)」后反复丢弃半成品的死循环 | 同 v2.2.0 | 已验证 LocModel 3.1.0 ✅（**未在 2.1.0 测试**） |
 | **v2.3.0** | 单文件图形下载器 `LocModel下载器_v2.3.exe`（101 KB） | v2.2.1 的能力扩展版：新增「LocModel 版本选择」（默认 3.3，可切回 3.1），覆盖 3.3 的 29 个模型（图像/视频 13 + 语言/推理 16），适配 3.3 新增的 `accel_lines` 等配置与 LoRA 目录。**下载/校验/续传内核与 v2.2.1 完全相同，未改一行** | 同 v2.2.0 | 已验证 LocModel 3.3.0 ✅ / 3.1.0 ✅ |
+| **v2.4.0 / v2.4.1** | 单文件图形下载器（166 KB） | 新增**在线搜索模型下载**：可搜索任意 Hugging Face 仓库，选择文件后走本机内核下载（自定义站点、测速择优、续传、校验全部复用）；新增 **GGUF 量化转换**（下载源权重 → 本地转出目标量化档）。**内核与 v2.3 字节级一致** | 同 v2.2.0 | 已验证 LocModel 3.3.0 ✅ / 3.1.0 ✅（源码与基线 exe 保留在仓库 `v2.4.1/`） |
+| **v2.4.2** | 单文件图形下载器 `LocModel下载器_v2.4.2.exe`（176 KB） | v2.4.1 的版本适配版：新增**对 LocModel 3.5 的支持（默认档位）**，3.3 / 3.1 仍可手动切换；适配 3.5 的 19 字段 catalog、Unsloth Dynamic 量化档、`hf_token` / `accel_nodes` 等新配置；详情面板新增「模型规格：180B（激活 6B）· 上下文 256K · 48 层」；识别 3.5 的就地 `.part` 半成品（只提示不接管）。**下载/校验/续传内核与 v2.2.1 / v2.3 / v2.4.1 字节级完全相同** | 同 v2.2.0 | 已验证 LocModel 3.5.0 ✅ / 3.3.0 ✅ / 3.1.0 ✅（清单自检） |
 
 两个版本**互不冲突**，可以同时存在：
 
@@ -120,6 +122,31 @@ LocModel 版本：[ 3.3（默认） v ]   探测：D:\...\LocModel.exe · 3.3.0 
 ```
 
 版本选择由下载器自己记在 exe 同目录的 `LocModel下载器_版本配置.txt` 里，**不写进 LocModel 的 `settings.json`**，所以切版本不会影响本体行为。
+
+---
+
+### 4.2 v2.4.2 的改动：在线搜索下载 + LocModel 3.5 支持（3.5 / 3.3 / 3.1）
+
+**（1）相比 v2.3 多出来的能力：自定义搜索模型下载。** 内置清单只覆盖 LocModel 自己的 29 个模型，想下别的仓库得手工拼 URL。v2.4.x 在界面里加了「在线搜索」：输入关键词搜 Hugging Face 上的仓库 → 选定仓库 → 列出文件（含 `.gguf` 量化档与 `mmproj` 视觉投影）→ 直接调用**本机下载内核**落盘。也就是说自定义站点、测速择优、断点续传、SHA-256 校验、镜像轮换这些能力，对任意仓库一样生效。配套新增 `HubBrowserForm.cs` / `HubSearch.cs` / `HubUrlMapper.cs`，以及 GGUF 量化转换（`ConvertService.cs` + `RepoQuants.cs`）。
+
+**（2）v2.4.2 的版本适配：LocModel 3.5。** 3.5 又改了一批结构：
+
+| 变化点 | 3.3 | 3.5 | v2.4.2 的处理 |
+| --- | --- | --- | --- |
+| catalog 字段 | 10 个 | **19 个**（新增 `params_b` / `active_b` / `layers` / `kv_layers` / `kv_heads` / `head_dim` / `experts` / `experts_used` / `ctx_max`） | 解析器补全 19 字段，缺失值宽松降级；规格写入详情面板与内部校验 |
+| 量化档命名 | `Q2_K … Q8_0` | **Unsloth Dynamic**：`UD-Q2_K_XL … UD-Q8_K_XL`（`gpt-oss` 另有 `F16`） | 不再按固定档位名硬匹配，改按仓库清单解析实际文件名 |
+| `settings.json` | 20 多个字段 | **36 个**，新增 `hf_token` / `github_mirror` / `accel_nodes` / `preferred_line` / `preferred_ip` | 只读识别；`hf_token` 仅在直连 `huggingface.co` 时附加，`hf-mirror.com` 不带，日志打码 |
+| 半成品机制 | `_locmodel_dl_tmp\lmv23\*.part` | 就地 `<file>.part` + `.part.meta` | 新增 `HalfPartScan.cs` 扫描并提示「主程序未完成下载 N MB」，**不接管、不删除、不续传** |
+| 图像/视频清单 | 13 条 | 13 条（不变） | 以内置快照为权威清单；exe 解析只做存在性核对，避免旧解析器漏 2 条、把 VAE 记到错误仓库 |
+| 落盘目录 | `{目录}\{组织}__{仓库}`、`{目录}\image\{slug}`、`{目录}\image\common` | 不变 | 不变；补充 slug 固定映射（`flux.1-schnell → flux1-schnell` 等），与 LocModel 自身目录完全对齐 |
+
+**内核零改动的边界**：`Downloader.cs`（SHA-256 前 12 位 `313DC3B74651`）与 `SiteProbe.cs`（`1915B5167DD4`）在 v2.2.1 / v2.3 / v2.4.1 / v2.4.2 四版中**字节级完全一致**，`HubBrowserForm.cs` / `HubSearch.cs` / `HubUrlMapper.cs` / `RepoQuants.cs` 在 v2.4.1 → v2.4.2 之间亦未改动。改动集中在 `LocModelProfile.cs`（版本差异表）、`CatalogService.cs`（catalog 解析 / slug / 快照权威）、`Models.cs`（规格字段）、`MainForm.cs`（界面）与新增的 `HalfPartScan.cs`。
+
+界面顶部变为：
+
+```
+LocModel 版本：[ 3.5（默认） v ]   探测：D:\...\LocModel.exe · 3.5.0        （切换后自动重载清单与目录规则）
+```
 
 ---
 

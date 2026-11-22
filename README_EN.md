@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | **English**
 
-> LocModel cannot reach `huggingface.co` from mainland China. Symptoms: the model list stays empty and downloads fail outright. This repository ships two complementary solutions: **v1.0 mirror patch** (flip one config field so LocModel itself uses a mirror) and **v2.4.2 standalone downloader** (full GUI downloader that never touches LocModel, with multi-site speed probing, automatic best-line selection, a LocModel **3.5 / 3.3 / 3.1** version switch, an in-app **online search that can download models from any Hugging Face repo**, and, in the latest **v3.0.0**, concurrent segmented downloading for speed).
+> LocModel cannot reach `huggingface.co` from mainland China. Symptoms: the model list stays empty and downloads fail outright. This repository ships two complementary solutions: **v1.0 mirror patch** (flip one config field so LocModel itself uses a mirror) and **v2.4.2 standalone downloader** (full GUI downloader that never touches LocModel, with multi-site speed probing, automatic best-line selection, a LocModel **3.5 / 3.3 / 3.1** version switch, an in-app **online search that can download models from any Hugging Face repo**, concurrent segmented downloading for speed in **v3.0.0**, and, in the latest **v3.1.0**, a **pre-download re-check that highlights already-downloaded files**, plus LocModel 3.6 support).
 
 ---
 
@@ -35,6 +35,7 @@
 | **v2.4.2** | Single-file GUI downloader `LocModel下载器_v2.4.2.exe` (176 KB) | Version-adaptation release of v2.4.1: adds **LocModel 3.5 support (default profile)** while 3.3 / 3.1 stay selectable; adapts to the 19-field 3.5 catalog, Unsloth Dynamic quants and new settings (`hf_token`, `accel_nodes`, ...); detail panel gains a “Model spec: 180B (active 6B) · context 256K · 48 layers” line; detects in-place `.part` files left by 3.5 (report only). **Kernel byte-for-byte identical to v2.2.1 / v2.3 / v2.4.1** | Same as v2.2.0 | Verified on LocModel 3.5.0 ✅ / 3.3.0 ✅ / 3.1.0 ✅ (catalog self-check) |
 | **v3.0.0** | Single-file GUI downloader `LocModel下载器_v3.0.0.exe` (195 KB) | Download-acceleration release of v2.4.2: adds **concurrent segmented download** (follows 302/307 manually while re-sending Range, throttles concurrency by the measured sequential write speed of the target disk, flushes segment progress every 2 s), plus a connection-count selector (1–16, default 4) and a segment status label; default site list trimmed to `hf-mirror.com`. Falls back to the single-connection kernel when segmentation does not apply | Same as v2.4.2 | Verified on a real 942 MB file: 4 connections, 13.9 s, 67.77 MB/s, SHA-256 matched; **tag only — no GitHub Release created** |
 
+| **v3.1.0** | Single-file GUI downloader `LocModel下载器_v3.1.0.exe` (201 KB) | Usability release on top of v3.0.0: adds a **pre-download re-check**. Every entry in the "Files to download" panel is verified against the local disk (target exists and is non-empty, no `.part` / `.part.meta` leftovers next to it, and length not below the declared size when known); matching rows are rendered **green** with **（已存在）** appended, and the panel title reports "N total, M already present". Also adds a **LocModel 3.6 profile (default)**, with 3.5 / 3.3 / 3.1 still selectable. The re-check is strictly read-only and the **download kernel is byte-identical to v3.0.0** | Same as v3.0.0 | Verified: `--selftest` 29/29, sampling of a real model directory (z-image-turbo 4 items / 3 green, qwen-image-2.1 5 items / 3 green, a main file with `.part` residue correctly reported as not downloaded), pixel-level check of the owner-drawn green rows, and a local 24 MB / 4-connection segmented download regression |
 The two versions do not conflict:
 
 - Just want LocModel itself to download again → use the v1.0 patch, done in 30 seconds.
@@ -311,6 +312,16 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 
   v3.0.0\src\*.cs
 ```
 
+**v3.1.0 downloader** (adds `DepsPrecheck.cs`; same command as v3.0.0, only the directory changes):
+
+```bat
+c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 /target:winexe ^
+  /out:LocModel下载器_v3.1.0.exe ^
+  /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Core.dll ^
+  /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll ^
+  v3.1.0\src\*.cs
+```
+
 **v1.0 patch**:
 
 ```bat
@@ -326,6 +337,7 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 - v2.2 lives in `v2.2/` and Release `v2.2.0`, overwriting nothing.
 - v3.0.0 lives in `v3.0.0/` plus tag `v3.0.0`; that release is **tagged only, no GitHub Release was created** — the binary and source zip sit in the repo root (`LocModel-Downloader-v3.0.0.exe`, `locmodel-downloader-v3.0.0-src.zip`) and in `v3.0.0/`.
 
+- v3.1.0 lives in `v3.1.0/` plus tag `v3.1.0`, and ships a GitHub Release marked as **Latest** (`LocModel-Downloader-v3.1.0.exe`, `locmodel-downloader-v3.1.0-src.zip`, `RELEASE_NOTES_v3.1.0.md`); the v3.0.0 tag and assets are never deleted and merely lose the Latest label.
 | Release | Assets |
 | --- | --- |
 | `v1.0.0` | `locmodel_patch.exe`, `locmodel_patch.cs`, `README.md` (original) |

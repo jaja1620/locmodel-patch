@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | **English**
 
-> LocModel cannot reach `huggingface.co` from mainland China. Symptoms: the model list stays empty and downloads fail outright. This repository ships two complementary solutions: **v1.0 mirror patch** (flip one config field so LocModel itself uses a mirror) and **v2.4.2 standalone downloader** (full GUI downloader that never touches LocModel, with multi-site speed probing, automatic best-line selection, a LocModel **3.5 / 3.3 / 3.1** version switch, and an in-app **online search that can download models from any Hugging Face repo**).
+> LocModel cannot reach `huggingface.co` from mainland China. Symptoms: the model list stays empty and downloads fail outright. This repository ships two complementary solutions: **v1.0 mirror patch** (flip one config field so LocModel itself uses a mirror) and **v2.4.2 standalone downloader** (full GUI downloader that never touches LocModel, with multi-site speed probing, automatic best-line selection, a LocModel **3.5 / 3.3 / 3.1** version switch, an in-app **online search that can download models from any Hugging Face repo**, and, in the latest **v3.0.0**, concurrent segmented downloading for speed).
 
 ---
 
@@ -33,6 +33,7 @@
 | **v2.3.0** | Single-file GUI downloader `LocModel下载器_v2.3.exe` (101 KB) | Capability extension of v2.2.1: adds a **LocModel version selector** (3.3 by default, switchable back to 3.1), covers all 29 models of 3.3 (13 image/video + 16 text/reasoning), and adapts to the new 3.3 settings such as `accel_lines` and the LoRA directory. **The download / verification / resume core is byte-for-byte identical to v2.2.1** | Same as v2.2.0 | Verified on LocModel 3.3.0 ✅ / 3.1.0 ✅ |
 | **v2.4.0 / v2.4.1** | Single-file GUI downloader (166 KB) | Adds **online model search & download** (search any Hugging Face repo, pick files, then download through the same local kernel: custom sites, speed probing, resume and verification all reused) plus **GGUF quantization conversion** (fetch source weights, convert locally). **Kernel byte-identical to v2.3** | Same as v2.2.0 | Verified on LocModel 3.3.0 ✅ / 3.1.0 ✅ (sources and baseline exe kept in `v2.4.1/`) |
 | **v2.4.2** | Single-file GUI downloader `LocModel下载器_v2.4.2.exe` (176 KB) | Version-adaptation release of v2.4.1: adds **LocModel 3.5 support (default profile)** while 3.3 / 3.1 stay selectable; adapts to the 19-field 3.5 catalog, Unsloth Dynamic quants and new settings (`hf_token`, `accel_nodes`, ...); detail panel gains a “Model spec: 180B (active 6B) · context 256K · 48 layers” line; detects in-place `.part` files left by 3.5 (report only). **Kernel byte-for-byte identical to v2.2.1 / v2.3 / v2.4.1** | Same as v2.2.0 | Verified on LocModel 3.5.0 ✅ / 3.3.0 ✅ / 3.1.0 ✅ (catalog self-check) |
+| **v3.0.0** | Single-file GUI downloader `LocModel下载器_v3.0.0.exe` (195 KB) | Download-acceleration release of v2.4.2: adds **concurrent segmented download** (follows 302/307 manually while re-sending Range, throttles concurrency by the measured sequential write speed of the target disk, flushes segment progress every 2 s), plus a connection-count selector (1–16, default 4) and a segment status label; default site list trimmed to `hf-mirror.com`. Falls back to the single-connection kernel when segmentation does not apply | Same as v2.4.2 | Verified on a real 942 MB file: 4 connections, 13.9 s, 67.77 MB/s, SHA-256 matched; **tag only — no GitHub Release created** |
 
 The two versions do not conflict:
 
@@ -300,6 +301,16 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 
   v2.3\src\Downloader.cs v2.3\src\CatalogService.cs v2.3\src\Models.cs v2.3\src\LocModelProfile.cs v2.3\src\MainForm.cs v2.3\src\SiteProbe.cs
 ```
 
+**v3.0.0 downloader** (adds `DownloadSeg.cs` and `DownloadConfig.cs`, two extra compression assemblies):
+
+```bat
+c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 /target:winexe ^
+  /out:LocModel下载器_v3.0.0.exe ^
+  /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Core.dll ^
+  /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll ^
+  v3.0.0\src\*.cs
+```
+
 **v1.0 patch**:
 
 ```bat
@@ -313,6 +324,7 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 - All v1.0 files (`locmodel_patch.cs`, `locmodel_patch.exe`, `build.cmd`, original `README-v1.0.0.md`) stay in the repo unchanged.
 - Release `v1.0.0` **is kept**, new versions are published as additional tags.
 - v2.2 lives in `v2.2/` and Release `v2.2.0`, overwriting nothing.
+- v3.0.0 lives in `v3.0.0/` plus tag `v3.0.0`; that release is **tagged only, no GitHub Release was created** — the binary and source zip sit in the repo root (`LocModel-Downloader-v3.0.0.exe`, `locmodel-downloader-v3.0.0-src.zip`) and in `v3.0.0/`.
 
 | Release | Assets |
 | --- | --- |

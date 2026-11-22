@@ -3,7 +3,7 @@
 **简体中文** | [English](README_EN.md)
 
 > LocModel 在国内网络下无法直连 `huggingface.co`，表现为模型列表拉不到、模型下载直接失败。
-> 本仓库提供两条互补的解决方案：**v1.0 镜像补丁**（改一行配置，让 LocModel 本体走镜像）与 **v2.4.2 独立下载器**（自带 GUI 的完整下载器，不改动 LocModel，多站点自动测速择优，支持 LocModel **3.5 / 3.3 / 3.1** 三版本切换，并可在界面里**在线搜索任意 Hugging Face 仓库的模型直接下载**）。
+> 本仓库提供两条互补的解决方案：**v1.0 镜像补丁**（改一行配置，让 LocModel 本体走镜像）与 **v2.4.2 独立下载器**（自带 GUI 的完整下载器，不改动 LocModel，多站点自动测速择优，支持 LocModel **3.5 / 3.3 / 3.1** 三版本切换，并可在界面里**在线搜索任意 Hugging Face 仓库的模型直接下载**；最新的 **v3.0.0** 在其上加入并发分片下载加速）。
 
 ---
 
@@ -34,6 +34,7 @@
 | **v2.3.0** | 单文件图形下载器 `LocModel下载器_v2.3.exe`（101 KB） | v2.2.1 的能力扩展版：新增「LocModel 版本选择」（默认 3.3，可切回 3.1），覆盖 3.3 的 29 个模型（图像/视频 13 + 语言/推理 16），适配 3.3 新增的 `accel_lines` 等配置与 LoRA 目录。**下载/校验/续传内核与 v2.2.1 完全相同，未改一行** | 同 v2.2.0 | 已验证 LocModel 3.3.0 ✅ / 3.1.0 ✅ |
 | **v2.4.0 / v2.4.1** | 单文件图形下载器（166 KB） | 新增**在线搜索模型下载**：可搜索任意 Hugging Face 仓库，选择文件后走本机内核下载（自定义站点、测速择优、续传、校验全部复用）；新增 **GGUF 量化转换**（下载源权重 → 本地转出目标量化档）。**内核与 v2.3 字节级一致** | 同 v2.2.0 | 已验证 LocModel 3.3.0 ✅ / 3.1.0 ✅（源码与基线 exe 保留在仓库 `v2.4.1/`） |
 | **v2.4.2** | 单文件图形下载器 `LocModel下载器_v2.4.2.exe`（176 KB） | v2.4.1 的版本适配版：新增**对 LocModel 3.5 的支持（默认档位）**，3.3 / 3.1 仍可手动切换；适配 3.5 的 19 字段 catalog、Unsloth Dynamic 量化档、`hf_token` / `accel_nodes` 等新配置；详情面板新增「模型规格：180B（激活 6B）· 上下文 256K · 48 层」；识别 3.5 的就地 `.part` 半成品（只提示不接管）。**下载/校验/续传内核与 v2.2.1 / v2.3 / v2.4.1 字节级完全相同** | 同 v2.2.0 | 已验证 LocModel 3.5.0 ✅ / 3.3.0 ✅ / 3.1.0 ✅（清单自检） |
+| **v3.0.0** | 单文件图形下载器 `LocModel下载器_v3.0.0.exe`（195 KB） | v2.4.2 的下载加速版：新增**并发分片下载**（手动跟随 302/307 并重发 Range、按目标盘实测顺序写速度自动压并发、每 2 秒落盘分片进度），界面新增连接数下拉（1–16，默认 4）与分片状态显示；默认站点收敛为 `hf-mirror.com`。分片不适用时（低于最小分片、无 Range、机械盘）自动退回单连接内核 | 同 v2.4.2 | 已验证真实 942 MB 文件 4 连接 13.9 s / 67.77 MB/s，SHA-256 一致；**本版仅打 tag，未建 GitHub Release** |
 
 两个版本**互不冲突**，可以同时存在：
 
@@ -324,6 +325,16 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 
   v2.3\src\Downloader.cs v2.3\src\CatalogService.cs v2.3\src\Models.cs v2.3\src\LocModelProfile.cs v2.3\src\MainForm.cs v2.3\src\SiteProbe.cs
 ```
 
+**v3.0.0 下载器**（新增 `DownloadSeg.cs`、`DownloadConfig.cs`，多引两个压缩程序集）：
+
+```bat
+c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 /target:winexe ^
+  /out:LocModel下载器_v3.0.0.exe ^
+  /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Core.dll ^
+  /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll ^
+  v3.0.0\src\*.cs
+```
+
 **v1.0 补丁**：
 
 ```bat
@@ -337,6 +348,7 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 - 仓库中 v1.0 的全部文件（`locmodel_patch.cs`、`locmodel_patch.exe`、`build.cmd`、`README-v1.0.0.md` 原说明书）**原样保留**。
 - Release 中 `v1.0.0` **保留不删**，新版本以新 tag 追加发布。
 - v2.2 以 `v2.2/` 目录与 `v2.2.0` Release 并存，不覆盖任何旧资产。
+- v3.0.0 以 `v3.0.0/` 目录与 tag `v3.0.0` 保留；该版本**只打了 tag，未创建 Release**，可执行文件与源码包直接放在仓库根目录（`LocModel-Downloader-v3.0.0.exe`、`locmodel-downloader-v3.0.0-src.zip`）与 `v3.0.0/` 中下载。
 
 | Release | 资产 |
 | --- | --- |

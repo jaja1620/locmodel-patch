@@ -3,7 +3,7 @@
 **简体中文** | [English](README_EN.md)
 
 > LocModel 在国内网络下无法直连 `huggingface.co`，表现为模型列表拉不到、模型下载直接失败。
-> 本仓库提供两条互补的解决方案：**v1.0 镜像补丁**（改一行配置，让 LocModel 本体走镜像）与 **v2.4.2 独立下载器**（自带 GUI 的完整下载器，不改动 LocModel，多站点自动测速择优，支持 LocModel **3.5 / 3.3 / 3.1** 三版本切换，并可在界面里**在线搜索任意 Hugging Face 仓库的模型直接下载**；**v3.0.0** 在其上加入并发分片下载加速，最新的 **v3.1.0** 再加**下载前复核与已下载文件标绿**，并适配 LocModel 3.6）。
+> 本仓库提供两条互补的解决方案：**v1.0 镜像补丁**（改一行配置，让 LocModel 本体走镜像）与 **v2.4.2 独立下载器**（自带 GUI 的完整下载器，不改动 LocModel，多站点自动测速择优，支持 LocModel **3.5 / 3.3 / 3.1** 三版本切换，并可在界面里**在线搜索任意 Hugging Face 仓库的模型直接下载**；**v3.0.0** 在其上加入并发分片下载加速，**v3.1.0** 加**下载前复核与已下载文件标绿**并适配 LocModel 3.6，最新的 **v3.1.1** 取消 `huggingface.co` 隐式兜底（站点只以「下载站点」栏位为准）并把模型清单改为「LocModel 扫描优先、内置快照兜底」）。
 
 ---
 
@@ -36,6 +36,7 @@
 | **v2.4.2** | 单文件图形下载器 `LocModel下载器_v2.4.2.exe`（176 KB） | v2.4.1 的版本适配版：新增**对 LocModel 3.5 的支持（默认档位）**，3.3 / 3.1 仍可手动切换；适配 3.5 的 19 字段 catalog、Unsloth Dynamic 量化档、`hf_token` / `accel_nodes` 等新配置；详情面板新增「模型规格：180B（激活 6B）· 上下文 256K · 48 层」；识别 3.5 的就地 `.part` 半成品（只提示不接管）。**下载/校验/续传内核与 v2.2.1 / v2.3 / v2.4.1 字节级完全相同** | 同 v2.2.0 | 已验证 LocModel 3.5.0 ✅ / 3.3.0 ✅ / 3.1.0 ✅（清单自检） |
 | **v3.0.0** | 单文件图形下载器 `LocModel下载器_v3.0.0.exe`（195 KB） | v2.4.2 的下载加速版：新增**并发分片下载**（手动跟随 302/307 并重发 Range、按目标盘实测顺序写速度自动压并发、每 2 秒落盘分片进度），界面新增连接数下拉（1–16，默认 4）与分片状态显示；默认站点收敛为 `hf-mirror.com`。分片不适用时（低于最小分片、无 Range、机械盘）自动退回单连接内核 | 同 v2.4.2 | 已验证真实 942 MB 文件 4 连接 13.9 s / 67.77 MB/s，SHA-256 一致；**本版仅打 tag，未建 GitHub Release** |
 | **v3.1.0** | 单文件图形下载器 `LocModel下载器_v3.1.0.exe`（201 KB） | v3.0.0 的可用性增强版：新增**下载前复核**——「本次将下载的文件」栏逐项判断本地是否已下载完成（目标存在且长度 > 0、同目录无 `.part` / `.part.meta` 半成品残留、声明大小已知时长度达标），命中的行整行标为**绿色**并在文件信息后追加「**（已存在）**」，栏标题同步显示「共 N 项，已存在 M 项」；新增 **LocModel 3.6 档（默认）**，3.5 / 3.3 / 3.1 仍可切换。复核为纯只读，**下载内核与 v3.0.0 字节级一致** | 同 v3.0.0 | 已验证 --selftest 29 项全过、真实模型目录抽样（z-image-turbo 4 项 3 绿 / qwen-image-2.1 5 项 3 绿、带 `.part` 的主文件正确判为未下载）、自绘例程像素级标绿验证、本地 24 MB 4 连接分片下载回归 |
+| **v3.1.1** | 单文件图形下载器 `LocModel下载器_v3.1.1.exe`（211 KB） | v3.1.0 的两点行为修正：**① 取消 `huggingface.co` 隐式兜底**——「下载站点」栏位成为唯一线路来源，内置站点表只剩 `hf-mirror.com`，测速排序不再把内置线路垫后，在线搜索与链接映射的默认站点与栏位同源，栏目里没填的站点一律不进入下载链路，站点全失败就如实报错；**② 模型清单改为「LocModel 扫描优先 + 内置快照兜底」**——语言/推理清单按「扫描 → 服务端 catalog.json → 内置快照」三级取源，图像/视频清单扫描到 ≥6 条即以扫描为准、快照条目只补不减（量化档并集、依赖只补空），LocModel 小版本新增的模型（本次实测 `wan2.1-i2v-14b`）可直接出现。站点策略改动涉及 `Downloader.cs`，但仅限站点表与空回退分支，分片/续传/校验内核逻辑未改，`DownloadSeg.cs` 与 v3.1.0 字节级一致 | 同 v3.0.0 | 已验证 --selftest 30 项全过（新增站点链 3 段 + 清单来源 2 段断言）、单站点真实下载回归（12 MiB 走完整内核，MD5 一致，日志中 `hf-mirror.com` / `huggingface.co` 命中均为 0）、404 场景只重试栏位站点不换线、清单实测 14 + 16 条 |
 
 两个版本**互不冲突**，可以同时存在：
 
@@ -346,6 +347,16 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 
   v3.1.0\src\*.cs
 ```
 
+**v3.1.1 下载器**（新增 `TextCatalogSnapshot.cs`，编译命令与 v3.1.0 相同，仅换目录）：
+
+```bat
+c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 /target:winexe ^
+  /out:LocModel下载器_v3.1.1.exe ^
+  /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Core.dll ^
+  /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll ^
+  v3.1.1\src\*.cs
+```
+
 **v1.0 补丁**：
 
 ```bat
@@ -361,7 +372,8 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 - v2.2 以 `v2.2/` 目录与 `v2.2.0` Release 并存，不覆盖任何旧资产。
 - v3.0.0 以 `v3.0.0/` 目录与 tag `v3.0.0` 保留；该版本**只打了 tag，未创建 Release**，可执行文件与源码包直接放在仓库根目录（`LocModel-Downloader-v3.0.0.exe`、`locmodel-downloader-v3.0.0-src.zip`）与 `v3.0.0/` 中下载。
 
-- v3.1.0 以 `v3.1.0/` 目录与 tag `v3.1.0` 保留，并创建 GitHub Release 作为 **Latest**（`LocModel-Downloader-v3.1.0.exe`、`locmodel-downloader-v3.1.0-src.zip`、`RELEASE_NOTES_v3.1.0.md`）；v3.0.0 的 tag 与资产一律不删，仅失去 Latest 标记。
+- v3.1.0 以 `v3.1.0/` 目录与 tag `v3.1.0` 保留（`LocModel-Downloader-v3.1.0.exe`、`locmodel-downloader-v3.1.0-src.zip`、`RELEASE_NOTES_v3.1.0.md`）。
+- v3.1.1 以 `v3.1.1/` 目录与 tag `v3.1.1` 保留，并创建 GitHub Release 作为 **Latest**（`LocModel-Downloader-v3.1.1.exe`、`locmodel-downloader-v3.1.1-src.zip`、`RELEASE_NOTES_v3.1.1.md`）；v3.1.0 及更早版本的 tag、目录与 Release 资产一律不删、不覆盖，仅 v3.1.0 失去 Latest 标记。
 
 | Release | 资产 |
 | --- | --- |
@@ -370,6 +382,7 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 | `v2.2.1` | `LocModel-Downloader-v2.2.1.exe`、源码 `locmodel-downloader-v2.2.1-src.zip`、说明 `RELEASE_NOTES_v2.2.1.md` |
 | `v2.3.0` | `LocModel-Downloader-v2.3.exe`、源码 `locmodel-downloader-v2.3-src.zip`、说明 `RELEASE_NOTES_v2.3.md` |
 | `v3.1.0` | `LocModel-Downloader-v3.1.0.exe`、源码 `locmodel-downloader-v3.1.0-src.zip`、说明 `RELEASE_NOTES_v3.1.0.md` |
+| `v3.1.1` | `LocModel-Downloader-v3.1.1.exe`、源码 `locmodel-downloader-v3.1.1-src.zip`、说明 `RELEASE_NOTES_v3.1.1.md` |
 
 ---
 

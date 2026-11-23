@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | **English**
 
-> LocModel cannot reach `huggingface.co` from mainland China. Symptoms: the model list stays empty and downloads fail outright. This repository ships two complementary solutions: **v1.0 mirror patch** (flip one config field so LocModel itself uses a mirror) and **v2.4.2 standalone downloader** (full GUI downloader that never touches LocModel, with multi-site speed probing, automatic best-line selection, a LocModel **3.5 / 3.3 / 3.1** version switch, an in-app **online search that can download models from any Hugging Face repo**, concurrent segmented downloading for speed in **v3.0.0**, and, in the latest **v3.1.0**, a **pre-download re-check that highlights already-downloaded files**, plus LocModel 3.6 support).
+> LocModel cannot reach `huggingface.co` from mainland China. Symptoms: the model list stays empty and downloads fail outright. This repository ships two complementary solutions: **v1.0 mirror patch** (flip one config field so LocModel itself uses a mirror) and **v2.4.2 standalone downloader** (full GUI downloader that never touches LocModel, with multi-site speed probing, automatic best-line selection, a LocModel **3.5 / 3.3 / 3.1** version switch, an in-app **online search that can download models from any Hugging Face repo**, concurrent segmented downloading for speed in **v3.0.0**, a **pre-download re-check that highlights already-downloaded files** in **v3.1.0**, plus LocModel 3.6 support, and, in the latest **v3.1.1**, no more implicit `huggingface.co` fallback (the “download sites” box is the only source of endpoints) and a **LocModel-scan-first model list with the built-in snapshot as fallback**).
 
 ---
 
@@ -36,6 +36,7 @@
 | **v3.0.0** | Single-file GUI downloader `LocModel下载器_v3.0.0.exe` (195 KB) | Download-acceleration release of v2.4.2: adds **concurrent segmented download** (follows 302/307 manually while re-sending Range, throttles concurrency by the measured sequential write speed of the target disk, flushes segment progress every 2 s), plus a connection-count selector (1–16, default 4) and a segment status label; default site list trimmed to `hf-mirror.com`. Falls back to the single-connection kernel when segmentation does not apply | Same as v2.4.2 | Verified on a real 942 MB file: 4 connections, 13.9 s, 67.77 MB/s, SHA-256 matched; **tag only — no GitHub Release created** |
 
 | **v3.1.0** | Single-file GUI downloader `LocModel下载器_v3.1.0.exe` (201 KB) | Usability release on top of v3.0.0: adds a **pre-download re-check**. Every entry in the "Files to download" panel is verified against the local disk (target exists and is non-empty, no `.part` / `.part.meta` leftovers next to it, and length not below the declared size when known); matching rows are rendered **green** with **（已存在）** appended, and the panel title reports "N total, M already present". Also adds a **LocModel 3.6 profile (default)**, with 3.5 / 3.3 / 3.1 still selectable. The re-check is strictly read-only and the **download kernel is byte-identical to v3.0.0** | Same as v3.0.0 | Verified: `--selftest` 29/29, sampling of a real model directory (z-image-turbo 4 items / 3 green, qwen-image-2.1 5 items / 3 green, a main file with `.part` residue correctly reported as not downloaded), pixel-level check of the owner-drawn green rows, and a local 24 MB / 4-connection segmented download regression |
+| **v3.1.1** | Single-file GUI downloader `LocModel下载器_v3.1.1.exe` (211 KB) | Two behaviour fixes on top of v3.1.0: **① no implicit `huggingface.co` fallback** — the “download sites” box is now the only source of endpoints (the built-in table keeps only `hf-mirror.com`, speed ranking no longer appends built-in lines, online search and link mapping default to the same site value, and any site not typed into the box never enters the download path; if every listed site fails, the error is reported as-is); **② the model list is now “LocModel scan first, built-in snapshot as fallback”** — the language/reasoning list resolves in three tiers (scan → server `catalog.json` → built-in snapshot), while image/video entries take the scan as authoritative once ≥ 6 entries parse and the snapshot is only ever topped up, never trimmed (quant levels are unioned, dependencies only filled when the snapshot has none), so models added in minor LocModel updates show up (e.g. `wan2.1-i2v-14b` in this build). The site policy change touches `Downloader.cs`, but only the site table and the empty-fallback branch; segmentation, resume and verification logic are untouched and `DownloadSeg.cs` stays byte-identical to v3.1.0 | Same as v3.0.0 | Verified: `--selftest` 30/30 (including 3 new site-chain assertions and 2 catalog-source assertions), a single-site real download (12 MiB through the whole kernel, matching MD5, zero hits for `hf-mirror.com` / `huggingface.co` in the log), a 404 case that only retried the configured site without switching, and a 14 + 16 entry catalog check |
 The two versions do not conflict:
 
 - Just want LocModel itself to download again → use the v1.0 patch, done in 30 seconds.
@@ -322,6 +323,16 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 
   v3.1.0\src\*.cs
 ```
 
+**v3.1.1 downloader** (adds `TextCatalogSnapshot.cs`; same command as v3.1.0, only the directory changes):
+
+```bat
+c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 /target:winexe ^
+  /out:LocModel下载器_v3.1.1.exe ^
+  /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Core.dll ^
+  /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll ^
+  v3.1.1\src\*.cs
+```
+
 **v1.0 patch**:
 
 ```bat
@@ -337,13 +348,16 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 - v2.2 lives in `v2.2/` and Release `v2.2.0`, overwriting nothing.
 - v3.0.0 lives in `v3.0.0/` plus tag `v3.0.0`; that release is **tagged only, no GitHub Release was created** — the binary and source zip sit in the repo root (`LocModel-Downloader-v3.0.0.exe`, `locmodel-downloader-v3.0.0-src.zip`) and in `v3.0.0/`.
 
-- v3.1.0 lives in `v3.1.0/` plus tag `v3.1.0`, and ships a GitHub Release marked as **Latest** (`LocModel-Downloader-v3.1.0.exe`, `locmodel-downloader-v3.1.0-src.zip`, `RELEASE_NOTES_v3.1.0.md`); the v3.0.0 tag and assets are never deleted and merely lose the Latest label.
+- v3.1.0 lives in `v3.1.0/` plus tag `v3.1.0` (`LocModel-Downloader-v3.1.0.exe`, `locmodel-downloader-v3.1.0-src.zip`, `RELEASE_NOTES_v3.1.0.md`).
+- v3.1.1 lives in `v3.1.1/` plus tag `v3.1.1`, and ships a GitHub Release marked as **Latest** (`LocModel-Downloader-v3.1.1.exe`, `locmodel-downloader-v3.1.1-src.zip`, `RELEASE_NOTES_v3.1.1.md`); the tags, directories and Release assets of v3.1.0 and earlier are never deleted or overwritten — v3.1.0 merely loses the Latest label.
 | Release | Assets |
 | --- | --- |
 | `v1.0.0` | `locmodel_patch.exe`, `locmodel_patch.cs`, `README.md` (original) |
 | `v2.2.0` | `LocModel-Downloader-v2.2.exe`, Chinese manual `README_zh-CN.md`, English README `README_EN.md`, source `locmodel-downloader-v2.2-src.zip` |
 | `v2.2.1` | `LocModel-Downloader-v2.2.1.exe`, source `locmodel-downloader-v2.2.1-src.zip`, notes `RELEASE_NOTES_v2.2.1.md` |
 | `v2.3.0` | `LocModel-Downloader-v2.3.exe`, source `locmodel-downloader-v2.3-src.zip`, notes `RELEASE_NOTES_v2.3.md` |
+| `v3.1.0` | `LocModel-Downloader-v3.1.0.exe`, source `locmodel-downloader-v3.1.0-src.zip`, notes `RELEASE_NOTES_v3.1.0.md` |
+| `v3.1.1` | `LocModel-Downloader-v3.1.1.exe`, source `locmodel-downloader-v3.1.1-src.zip`, notes `RELEASE_NOTES_v3.1.1.md` |
 
 ---
 

@@ -1,0 +1,144 @@
+ModelsDir=F:\AI-Models
+AllCount=31 image=15 text=16
+TextCatalogSource=SCAN count=16
+ImageCatalogSource=SCAN count=15
+ListBoxCount=31
+StatusText=正在从 LocModel 获取…
+DirState=LocModel 默认目录： F:\AI-Models    （当前一致，LocModel 可直接识别）
+Sites=https://hf-mirror.com
+SiteCount=1 state=只使用本栏位里的站点（下载 / 在线搜索 / 测速一致）；留空则用默认 https://hf-mirror.com。修改后自动保存，不再内置其它站点兜底。（对口型模型用：实测 https://hf-mirror.com 已涵盖其全部权重，站点栏位无需增改；程序包走 github.com，人声分离模型走 dl.fbaipublicfiles.com，均为绝对地址）
+SiteBox=720x48 visible=False
+Mirrors=https://hf-mirror.com
+-- v3.1.5 对口型子系统 --
+VerPolicy=OK Versions=[3.6.5,3.6,3.5,3.3,3.1] Default=3.6.5
+VerLipsync=OK 3.6.5=True 3.6=False
+Detect365=OK -> 3.6.5 Detect36=OK -> 3.6
+LipVariants=OK count=2
+  hq files=16 dup=False bytes=40117730791(37.36 GB)
+  low files=16 dup=False bytes=25919703367(24.14 GB)
+LipVerifyEmpty=OK missing=16/16
+LipRoot=C:\Users\jiasi\AppData\Local\LocModel\lipsync Existing=ok
+LipSiteNoteHasHfMirror=OK 对口型模型用站点：https://hf-mirror.com（实测已涵盖对口型全部权重，下载站点栏位无需增改）；程序包走 github.com/MeiGen-AI/InfiniteTalk，人声分离模型走 dl.fbaipublicfiles.com（两者用绝对地址，不经过站点栏位）
+TokenMask=OK long=sk-1********cdef short=*****
+TokenLooksSecret=OK
+SettingsReadOnly=OK 本机 token 展示= HasHfToken=True lipsync_variant=
+LipsyncVariantField=有3.6.5字段 ExtraSettings=19
+-- v3.0.0 并发分片下载 --
+BuiltinMirrors=https://hf-mirror.com HasM1M2=False
+SegConnections=4 MinSegMB=8 SegmentEnabled=True Cfg=C:\Users\jiasi\AppData\Roaming\Tencent\Marvis\User\oAN1i2a0fVAITIdl93aRLTkg_DYY\workspace\conv_907b822f6b674d8f8b716bf80f989370\temp\repo300\v3.1.5\dist\LocModel下载器_下载配置.txt CfgExists=False
+SegCombo=3/4 条连接（推荐） SegState=972x18
+  Plan(3221225472B,2片) ok=True 每片≈1536.0MB sum=3221225472
+  Plan(3221225472B,4片) ok=True 每片≈768.0MB sum=3221225472
+  Plan(3221225472B,8片) ok=True 每片≈384.0MB sum=3221225472
+  Plan(5368709127B,2片) ok=True 每片≈2560.0MB sum=5368709127
+  Plan(5368709127B,4片) ok=True 每片≈1280.0MB sum=5368709127
+  Plan(5368709127B,8片) ok=True 每片≈640.0MB sum=5368709127
+  Plan(1099511627776B,2片) ok=True 每片≈524288.0MB sum=1099511627776
+  Plan(1099511627776B,4片) ok=True 每片≈262144.0MB sum=1099511627776
+  Plan(1099511627776B,8片) ok=True 每片≈131072.0MB sum=1099511627776
+SegDetect.None=False
+SitePolicy=OK DefaultSites=[https://hf-mirror.com] NoHfCom=True
+SiteFollow=OK 只填一个站点 → HfBases=[https://example.org] Mirrors=[https://example.org]
+SiteEmptyFallback=OK 空栏位 → HfBases=[https://hf-mirror.com] Mirrors=[https://hf-mirror.com]
+SegDetect.HasSeg=True Progress=40
+HfBases=https://hf-mirror.com
+QuantCount=4 title=Qwen-Image 2.1
+DepsShown=5 size=分辨率/精度: Q3_K   ·   大小未知
+FormSize=1320x900 ListBox=326x419 visible=False
+DetailPanel=786x437 DepsList=740x190
+-- 前 6 条列表项 --
+  0: Qwen-Image 2.1 | image | 量化 4
+  1: Z-Image Turbo | image | 量化 4
+  2: Qwen-Image | image | 量化 6
+  3: Qwen-Image-Edit | image | 量化 6
+  4: FLUX.1 schnell | image | 量化 3
+  5: FLUX.2 klein 4B | image | 量化 2
+-- 分类切换 --
+  图像模型 -> 8 项
+  视频模型 -> 7 项
+  语言 / 推理 -> 16 项
+-- v2.4.2 版本适配 --
+  3.6.5: label=LocModel 3.6.5（默认） temp=_locmodel_dl_tmp\lmv23 lora=True comfy=True token=True accelNodes=True ghMirror=True catalogSpec=True imgAuthority=0 scanPart=True images=13 imgSpec=0
+  3.6: label=LocModel 3.6 temp=_locmodel_dl_tmp\lmv23 lora=True comfy=True token=True accelNodes=True ghMirror=True catalogSpec=True imgAuthority=0 scanPart=True images=13 imgSpec=0
+  3.5: label=LocModel 3.5 temp=_locmodel_dl_tmp\lmv23 lora=True comfy=True token=True accelNodes=True ghMirror=True catalogSpec=True imgAuthority=0 scanPart=True images=13 imgSpec=0
+  3.3: label=LocModel 3.3 temp=_locmodel_dl_tmp\lmv23 lora=True comfy=True token=False accelNodes=False ghMirror=False catalogSpec=False imgAuthority=1 scanPart=False images=13 imgSpec=0
+  3.1: label=LocModel 3.1 temp=_locmodel_dl_tmp lora=False comfy=False token=False accelNodes=False ghMirror=False catalogSpec=False imgAuthority=2 scanPart=False images=12 imgSpec=0
+DefaultVersion=3.6.5 Normalize(3.6.0)=3.6 Normalize(v3.6)=3.6 Normalize(3.6.0-beta)=3.6 Normalize(3.5.0)=3.5 Normalize(v3.5)=3.5 Normalize(3.5.0-beta)=3.5 Normalize(9.9)=3.6.5
+-- v3.1.0 下载前复核 --
+  IsReady.done(未知大小)=True done(声明2048)=True half(有.part)=False empty=False short(声明4096)=False missing=False null=False
+  HasMmproj.dir=True 空目录=False
+  Suffix(true)=（已存在） Suffix(false)=[]
+  CountText(3,1)=本次将下载的文件（共 3 项，已存在 1 项）
+  RowText=主文件  x  →  y（已存在） Exists=True DrawColor=CExists(Green)
+  -- 真实目录抽样（F:\AI-Models）--
+    z-image-turbo quant=Q3_K 标题=本次将下载的文件（共 4 项，已存在 0 项）
+      [常规] 主文件  leejet/Z-Image-Turbo-GGUF  →  z_image_turbo-Q3_K.gguf
+      [常规] —— 依赖组件（image\common）——
+      [常规] 依赖    unsloth/Qwen3-4B-Instruct-2507-GGUF  →  Qwen3-4B-Instruct-2507-Q4_K_M.gguf
+      [常规] 依赖    Comfy-Org/z_image_turbo  →  ae.safetensors
+      合计 4 项，绿色 0 项
+    qwen-image-2.1 quant=Q3_K 标题=本次将下载的文件（共 5 项，已存在 0 项）
+      [常规] 主文件  leejet/Qwen-Image-2.1-GGUF  →  qwen_image_2.1-Q3_K.gguf
+      [常规] —— 依赖组件（image\common）——
+      [常规] 依赖    Qwen/Qwen3-VL-8B-Instruct-GGUF  →  Qwen3VL-8B-Instruct-Q4_K_M.gguf
+      [常规] 依赖    Qwen/Qwen3-VL-8B-Instruct-GGUF  →  mmproj-Qwen3VL-8B-Instruct-F16.gguf
+      [常规] 依赖    Comfy-Org/Qwen-Image-2.1  →  qwen_image_2.1_vae_bf16.safetensors
+      合计 5 项，绿色 0 项
+  绘制验证：已存在行绿色像素=281（>20 视为标绿成功），未存在行绿色像素=1
+Detect=3.6.5 (exe 版本号 3.6.5)
+SpecFields=16/31
+  SpecSample=qwen3.8-flash-next -> 模型规格：180B（激活 6B） · 上下文 256K · 48 层
+  SpecSample=qwen3.8-27b -> 模型规格：27B · 上下文 256K · 64 层
+  SpecSample=muse-glimmer-30b -> 模型规格：30B · 上下文 128K · 64 层
+MaskToken=hf_****c81 short=**** empty=(空)
+-- 图像清单核对日志 (3.6.5) --
+  LocModel 3.6.5 图像/视频清单：以扫描为准（扫描 13 条 / 快照 13 条）
+  · wan2.1-i2v-14b-480p ← city96/Wan2.1-I2V-14B-480P-gguf（量化 1 档，依赖 1）
+  · qwen-image-2.1 ← leejet/Qwen-Image-2.1-GGUF（量化 4 档，依赖 2）
+  · minimax-h3-image ← Hearthscale/MiniMax-H3-Image-GGUF（量化 4 档，依赖 2）
+  · z-image-turbo ← leejet/Z-Image-Turbo-GGUF（量化 4 档，依赖 2）
+  · qwen-image ← QuantStack/Qwen-Image-GGUF（量化 6 档，依赖 2）
+  · flux1-schnell ← leejet/FLUX.1-schnell-gguf（量化 0 档，依赖 0）
+  · flux2-klein-4b ← leejet/FLUX.2-klein-4B-GGUF（量化 2 档，依赖 2）
+  · qwen-image-edit ← unsloth/Qwen-Image-Edit-2511-GGUF（量化 6 档，依赖 0）
+  · wan2.1-t2v-1.3b ← Comfy-Org/Wan_2.1_ComfyUI_repackaged（量化 0 档，依赖 2）
+  · wan2.2-ti2v-5b ← QuantStack/Wan2.2-TI2V-5B-GGUF（量化 3 档，依赖 1）
+  · ltx-2.3 ← unsloth/LTX-2.3-GGUF（量化 5 档，依赖 4）
+  · sulphur-3 ← Abiray/Sulphur-3-GGUF（量化 3 档，依赖 0）
+  · wan2.2-i2v-a14b ← QuantStack/Wan2.2-I2V-A14B-GGUF（量化 5 档，依赖 0）
+  + 新增 wan2.1-i2v-14b-480p（city96/Wan2.1-I2V-14B-480P-gguf，量化 1 档）
+  + 新增 sulphur-3（Abiray/Sulphur-3-GGUF，量化 3 档）
+  新增 2 · 补档 0 · 快照保留提示 0
+AuthHF=Bearer hf_****c81 AuthMirror=(不携带) AuthOther=(不携带)
+InlineParts(scanTree)=0
+-- 详情面板布局 --
+  selOk=31 selFail=0 specRows=16 overlap=0
+  lastDesc=模型规格：117B（激活 5.1B） · 上下文 128K · 36 层 | OpenAI 开源大号 MoE，专家放内存也能跑出不错速度
+  lastRepo=仓库: unsloth/gpt-oss-120b-GGUF lastSize=分辨率/精度: Q4_K_M   ·   62.8 GB（catalog 声明）
+-- v3.1.2 在线搜索下载目录 + 队列 --
+  CfgPath=C:\Users\jiasi\AppData\Local\Temp\locmodel_dest_d61e99478743473fa90f64102a7b670f\hubdest.txt
+  Load.无文件=OK mode=0 dir=[]
+  RoundTrip=OK mode=1 dir=[C:\Users\jiasi\AppData\Local\Temp\locmodel_dest_d61e99478743473fa90f64102a7b670f\自定义 目录]
+  IsReady=OK 自定义空目录=False 主目录空=True mode=1 dir=[]
+  Normalize=OK quoted=[C:\Users\jiasi\AppData\Local\Temp\locmodel_dest_d61e99478743473fa90f64102a7b670f] empty=[] bad=[C:\abc]
+  Land=OK destDir=null→[E:\LocModels\owner__repo] custom→[C:\Users\jiasi\AppData\Local\Temp\locmodel_dest_d61e99478743473fa90f64102a7b670f\自定义 目录\owner__repo]
+  BuildHubItems=OK mainDir=C:\Users\jiasi\AppData\Local\Temp\locmodel_dest_d61e99478743473fa90f64102a7b670f\hubmain\owner__repo dest0=C:\Users\jiasi\AppData\Local\Temp\locmodel_dest_d61e99478743473fa90f64102a7b670f\hubmain\owner__repo\model-Q4_K_M.gguf size=[4096,512]
+  队列FIFO=OK count=3 head=o/a/Q4 重复被拒=True note=[队列里已有相同任务（同仓库 + 同量化档 + 同目标目录），已跳过]
+  队列上限=OK 再收=5 count=8 超限被拒=True note=[队列已满（上限 8 个未开始任务），请等待完成或点「清空队列」]
+  取消不清队列=OK before=8 after=8
+  清空队列=OK count=0 label=[下载队列：空闲（最多排 8 个）]
+  v312.sum ok=10 fail=0
+-- v3.1.3 按钮状态 + 单实例 --
+  版本号=OK title=[LocModel 模型下载器 v3.1.5]
+  空闲态=OK btnDownload=True btnCancel=False
+  解析窗口=OK btnDownload=False btnCancel=False
+  执行中=OK btnDownload=True btnCancel=True
+  取消中=OK btnDownload=True btnCancel=False
+  FinishJob=OK busy=False cancelling=False current=null btnDownload=True btnCancel=False
+  队列空闲文本=OK [下载队列：空闲（最多排 8 个）]
+  队列忙时文本=OK [下载队列：待调度 · 等待 1 个 / 上限 8]
+  单实例互斥=OK first=True second=False name=[Local\LocModelDownloader_SingleInstance_v3]
+  v313.sum ok=9 fail=0
+MismatchState=LocModel 默认目录： F:\AI-Models    （当前为自定义目录，与默认目录不一致）
+MismatchSameDir=False
+

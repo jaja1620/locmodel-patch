@@ -3,7 +3,7 @@
 **简体中文** | [English](README_EN.md)
 
 > LocModel 在国内网络下无法直连 `huggingface.co`，表现为模型列表拉不到、模型下载直接失败。
-> 本仓库提供两条互补的解决方案：**v1.0 镜像补丁**（改一行配置，让 LocModel 本体走镜像）与 **v2.4.2 独立下载器**（自带 GUI 的完整下载器，不改动 LocModel，多站点自动测速择优，支持 LocModel **3.5 / 3.3 / 3.1** 三版本切换，并可在界面里**在线搜索任意 Hugging Face 仓库的模型直接下载**；**v3.0.0** 在其上加入并发分片下载加速，**v3.1.0** 加**下载前复核与已下载文件标绿**并适配 LocModel 3.6，最新的 **v3.1.1** 取消 `huggingface.co` 隐式兜底（站点只以「下载站点」栏位为准）并把模型清单改为「LocModel 扫描优先、内置快照兜底」）。
+> 本仓库提供两条互补的解决方案：**v1.0 镜像补丁**（改一行配置，让 LocModel 本体走镜像）与 **v2.4.2 独立下载器**（自带 GUI 的完整下载器，不改动 LocModel，多站点自动测速择优，支持 LocModel **3.5 / 3.3 / 3.1** 三版本切换，并可在界面里**在线搜索任意 Hugging Face 仓库的模型直接下载**；**v3.0.0** 在其上加入并发分片下载加速，**v3.1.0** 加**下载前复核与已下载文件标绿**并适配 LocModel 3.6，最新的 **v3.1.1** 取消 `huggingface.co` 隐式兜底（站点只以「下载站点」栏位为准）并把模型清单改为「LocModel 扫描优先、内置快照兜底」，**v3.1.2** 让在线搜索可自选**下载到自定义目录**并把多笔任务改为**串行排队**（上限 8 个），**v3.1.3** 修正「开始下载」按钮被整段禁用等 6 处交互缺陷（本地构建，未发 Release），最新的 **v3.1.5** 适配 LocModel **3.6.5**（默认档位，3.6 / 3.5 / 3.3 / 3.1 仍可切换）、把 **对口型（InfiniteTalk）子系统纳入下载器纳管**，并新增**配置只读查看**（新字段与 token 打码展示、绝不写回 `settings.json`））。
 
 ---
 
@@ -37,6 +37,9 @@
 | **v3.0.0** | 单文件图形下载器 `LocModel下载器_v3.0.0.exe`（195 KB） | v2.4.2 的下载加速版：新增**并发分片下载**（手动跟随 302/307 并重发 Range、按目标盘实测顺序写速度自动压并发、每 2 秒落盘分片进度），界面新增连接数下拉（1–16，默认 4）与分片状态显示；默认站点收敛为 `hf-mirror.com`。分片不适用时（低于最小分片、无 Range、机械盘）自动退回单连接内核 | 同 v2.4.2 | 已验证真实 942 MB 文件 4 连接 13.9 s / 67.77 MB/s，SHA-256 一致；**本版仅打 tag，未建 GitHub Release** |
 | **v3.1.0** | 单文件图形下载器 `LocModel下载器_v3.1.0.exe`（201 KB） | v3.0.0 的可用性增强版：新增**下载前复核**——「本次将下载的文件」栏逐项判断本地是否已下载完成（目标存在且长度 > 0、同目录无 `.part` / `.part.meta` 半成品残留、声明大小已知时长度达标），命中的行整行标为**绿色**并在文件信息后追加「**（已存在）**」，栏标题同步显示「共 N 项，已存在 M 项」；新增 **LocModel 3.6 档（默认）**，3.5 / 3.3 / 3.1 仍可切换。复核为纯只读，**下载内核与 v3.0.0 字节级一致** | 同 v3.0.0 | 已验证 --selftest 29 项全过、真实模型目录抽样（z-image-turbo 4 项 3 绿 / qwen-image-2.1 5 项 3 绿、带 `.part` 的主文件正确判为未下载）、自绘例程像素级标绿验证、本地 24 MB 4 连接分片下载回归 |
 | **v3.1.1** | 单文件图形下载器 `LocModel下载器_v3.1.1.exe`（211 KB） | v3.1.0 的两点行为修正：**① 取消 `huggingface.co` 隐式兜底**——「下载站点」栏位成为唯一线路来源，内置站点表只剩 `hf-mirror.com`，测速排序不再把内置线路垫后，在线搜索与链接映射的默认站点与栏位同源，栏目里没填的站点一律不进入下载链路，站点全失败就如实报错；**② 模型清单改为「LocModel 扫描优先 + 内置快照兜底」**——语言/推理清单按「扫描 → 服务端 catalog.json → 内置快照」三级取源，图像/视频清单扫描到 ≥6 条即以扫描为准、快照条目只补不减（量化档并集、依赖只补空），LocModel 小版本新增的模型（本次实测 `wan2.1-i2v-14b`）可直接出现。站点策略改动涉及 `Downloader.cs`，但仅限站点表与空回退分支，分片/续传/校验内核逻辑未改，`DownloadSeg.cs` 与 v3.1.0 字节级一致 | 同 v3.0.0 | 已验证 --selftest 30 项全过（新增站点链 3 段 + 清单来源 2 段断言）、单站点真实下载回归（12 MiB 走完整内核，MD5 一致，日志中 `hf-mirror.com` / `huggingface.co` 命中均为 0）、404 场景只重试栏位站点不换线、清单实测 14 + 16 条 |
+| **v3.1.2** | 单文件图形下载器 `LocModel下载器_v3.1.2.exe`（227 KB） | v3.1.1 的两项交互增强：**① 在线搜索窗口可选「下载到主界面目录 / 自定义目录」**——单选区 + `浏览…` 目录选择 + 实时落点提示，自定义目录下落盘 `{自定义目录}\{owner}__{仓库名}`，主界面「模型目录」栏位与 LocModel 配置均不被改写；自定义目录为空时点下载会提示并聚焦浏览按钮、任务不提交；选择记在 exe 同目录 `LocModel下载器_在线搜索下载目录.txt`（`mode=` / `dir=`），下次打开自动恢复；**② 下载任务串行排队（A 方案）**——同「仓库 + 量化档 + 目标目录」去重、上限 8 个未开始任务、主界面新增「下载队列」状态行与「清空队列」按钮、「取消下载」只取消当前任务且队列继续、队列清空后统一弹一次汇总，主界面「开始下载」与在线搜索共用同一队列。下载内核（`Downloader.cs` / `DownloadSeg.cs` / `CatalogService.cs`）与 v3.1.1 **字节级一致**，队列只在外层串行交付任务 | 同 v3.0.0 | 已验证 --selftest 30 项全过 + 新增 v3.1.2 段 10 项断言（目录记忆往返、路径归一化、两种落点、队列 FIFO/去重/上限/取消不清队列/清空）、主界面与在线搜索窗口离屏布局自检（无重叠）、`--hubget` 两条真实下载回归（主界面目录 570 B 落盘 / 自定义目录 570 B 落盘且主界面目录零写入）、真实模型目录 `F:\AI-Models` 108 文件前后零改动 |
+| **v3.1.3** | 单文件图形下载器 `LocModel-Downloader-v3.1.3.exe`（214 KB） | v3.1.2 的六处交互缺陷修复：**① 主界面「开始下载」不再整段禁用**（拆 `_submitting` 与 `_busy`）；**② `_busy` 与「取消下载」按钮由统一状态方法 `UpdateActionState()` 裁决**；**③ 在线搜索窗口显示队列状态与拒绝提示**（`lblQueueState` 每秒刷新）；**④ 切换仓库后刷新「实际落盘」路径**；**⑤ 单实例互斥**（`Local\LocModelDownloader_SingleInstance_v3`，`--` 开头的命令行模式绕开互斥）；**⑥ 版本号统一**（主窗口标题、在线搜索窗口标题、配置 txt 头注释、各 `.cs` 首行注释）。下载内核与 v3.1.2 字节级一致 | 同 v3.0.0 | 本地已完成编译、自检与打包；**未打 tag、未发 Release**，源码与产物随 v3.1.5 提交入库留档 |
+| **v3.1.5** | 单文件图形下载器 `LocModel-Downloader-v3.1.5.exe`（265 KB） | v3.1.3 的能力扩展版：**① 默认档位切到 LocModel 3.6.5**（3.6 / 3.5 / 3.3 / 3.1 保留可切换，`Normalize()` 对 3.6.x 拆档、`Detect()` 增加 3.6.5 专有 settings 判据）；**② 对口型（InfiniteTalk）子系统纳入纳管**——新增 `LipsyncCatalog.cs` / `LipsyncEngine.cs` / `LipsyncForm.cs` 三个独立文件（主界面只加「对口型模型」入口按钮），两档（`hq` fp8 约 37.4 GB / `low` GGUF Q4_K_M 约 24.1 GB）共 16 个文件，默认落盘 `%LOCALAPPDATA%\LocModel\lipsync`（与 LocModel 3.6.5 程序数据目录一致），权重走「下载站点」栏位、程序包走 GitHub 绝对地址、人声分离模型走 `dl.fbaipublicfiles.com`；**③ 站点栏位未改**——实测 `hf-mirror.com` 对 18 个权重文件 18/18 命中且字节一致，因此只在「下载站点」状态行追加说明（「对口型模型用」），不新增站点行；**④ 配置只读查看**——新窗口展示 3.6.5 新增字段与打码后的 `hf_token`，**不含任何写盘代码**；**⑤ 小文件最小长度下限修正**（`ExpectedSize < 512` 时不再误判 160 B / 250 B 的配置小文件为错误页）。除上述修正外，分片 / 续传 / 校验内核与 v3.1.3 字节级一致 | 同 v3.0.0 | 已验证 --selftest **31 项全过 0 FAIL**、`--lipget` 真实下载回归 5 场景（全新 6 文件 MD5 全对、幂等重跑全跳过、1 MiB `.part` 206 续传、站点全错如实失败不换线、栏位两站回落命中次站）、`hf-mirror.com` 18 文件 HEAD 逐条核对、`--uicheck` 离屏渲染无重叠。**F 盘离线，37.4 GB 全量真实下载未做（见发布说明「已知局限」）** |
 
 两个版本**互不冲突**，可以同时存在：
 
@@ -269,6 +272,18 @@ locmodel_patch.exe --path "..."    # 指定 settings.json 路径或其目录
 
 ## 九、验证记录
 
+**v3.1.5 升级验证（LocModel 3.6.5 适配 + 对口型子系统纳管）**
+
+| 项 | 内容 | 结果 |
+| --- | --- | --- |
+| 编译与自检 | `--selftest` 31 项（档位策略 5、3.6.5 检测 2、对口型清单 2 档结构 16、token 打码长短用例、settings 只读渲染、v3.1.3 回归 9、图像/视频清单重叠） | 31/31 全过，`selFail=0`；`Default=3.6.5`、`Versions=[3.6.5,3.6,3.5,3.3,3.1]` |
+| 镜像覆盖核对 | `tools/mirror_check.py` 逐条 HEAD 对口型 18 个权重文件（`hf-mirror.com` 与 `huggingface.co` 各 18 次） | hf-mirror **18/18 状态 200** 且 `Content-Length` 与清单字节一致；huggingface.co 18 条全部不可达 → **站点栏位不增改**，仅补说明文案 |
+| 绝对地址通道 | 程序包 `github.com/.../main.zip`、`codeload.github.com/.../zip/main`、`dl.fbaipublicfiles.com/demucs/hybrid_transformer/955717e8-8726e21a.th` | 三条均 200，人声分离模型 84,141,911 字节 |
+| 对口型下载回归 | `--lipget` 走本地 Range 服务（真实 206 / 分片 / 校验），5 场景：全新下载 6 文件、幂等重跑、1 MiB `.part` 续传、站点全错、栏位两站回落 | 全部符合预期：MD5 与字节全对、`.part` 残留 0、全错场景 `ok=False` 不换线、两站场景命中次站 |
+| 界面自检 | `--uicheck` 离屏渲染 | 标题 `v3.1.5`、默认档位 `LocModel 3.6.5（默认）`、「配置只读查看」「对口型模型」按钮就位、无控件重叠 |
+| 配置只读 | `SettingsView.cs` 全文件审查（无 `File.Write*` / 无 settings 回写）+ `--selftest` 的 `SettingsReadOnly` 段 | 通过；`hf_token` 展示为 `sk-1********cdef` 形式（长度 ≤ 8 全星号） |
+| 未覆盖（如实声明） | 37.4 GB / 24.1 GB 全量真实下载、LocModel 3.6.5 本体联调 | F 盘模型盘离线（`F:\AI-Models` 不可达），本轮只在 C/D 临时目录做替身回归；本机未装对口型子系统，未跑真正的口型推理 |
+
 **v2.3 升级验证（LocModel 3.3.0 适配）**
 
 | 项 | 内容 | 结果 |
@@ -357,6 +372,28 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 
   v3.1.1\src\*.cs
 ```
 
+**v3.1.2 下载器**（新增 `HubDestStore.cs`，编译命令与 v3.1.1 相同，仅换目录）：
+
+```bat
+c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 /target:winexe ^
+  /out:LocModel下载器_v3.1.2.exe ^
+  /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Core.dll ^
+  /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll ^
+  v3.1.2\src\*.cs
+```
+
+**v3.1.5 下载器**（新增 `LipsyncCatalog.cs` / `LipsyncEngine.cs` / `LipsyncForm.cs` / `SettingsView.cs`，编译命令与 v3.1.2 相同，仅换目录）：
+
+```bat
+c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /codepage:65001 /target:winexe ^
+  /out:LocModel下载器_v3.1.5.exe ^
+  /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Core.dll ^
+  /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll ^
+  v3.1.5\src\*.cs
+```
+
+v3.1.3 / v3.1.5 都不需要额外引用；源码目录中若有取证用的 probe 文件，编译前请先移出 `src\`（仓库内 `v3.1.5/src` 只含 21 个正式 `.cs`）。
+
 **v1.0 补丁**：
 
 ```bat
@@ -373,7 +410,10 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 - v3.0.0 以 `v3.0.0/` 目录与 tag `v3.0.0` 保留；该版本**只打了 tag，未创建 Release**，可执行文件与源码包直接放在仓库根目录（`LocModel-Downloader-v3.0.0.exe`、`locmodel-downloader-v3.0.0-src.zip`）与 `v3.0.0/` 中下载。
 
 - v3.1.0 以 `v3.1.0/` 目录与 tag `v3.1.0` 保留（`LocModel-Downloader-v3.1.0.exe`、`locmodel-downloader-v3.1.0-src.zip`、`RELEASE_NOTES_v3.1.0.md`）。
-- v3.1.1 以 `v3.1.1/` 目录与 tag `v3.1.1` 保留，并创建 GitHub Release 作为 **Latest**（`LocModel-Downloader-v3.1.1.exe`、`locmodel-downloader-v3.1.1-src.zip`、`RELEASE_NOTES_v3.1.1.md`）；v3.1.0 及更早版本的 tag、目录与 Release 资产一律不删、不覆盖，仅 v3.1.0 失去 Latest 标记。
+- v3.1.1 以 `v3.1.1/` 目录与 tag `v3.1.1` 保留（`LocModel-Downloader-v3.1.1.exe`、`locmodel-downloader-v3.1.1-src.zip`、`RELEASE_NOTES_v3.1.1.md`）。
+- v3.1.2 以 `v3.1.2/` 目录、根目录 `LocModel-Downloader-v3.1.2.exe` / `locmodel-downloader-v3.1.2-src.zip` 与 `RELEASE_NOTES_v3.1.2.md` 保留；**v3.1.2 未打 tag、未创建 Release**（其说明文件内早期记录的「Release 作为 Latest」为当时的计划，实际以本行为准）。
+- v3.1.3 以 `v3.1.3/` 目录、根目录 `LocModel-Downloader-v3.1.3.exe` / `locmodel-downloader-v3.1.3-src.zip` 与 `RELEASE_NOTES_v3.1.3.md` 留档，**不打 tag、不发 Release**。
+- v3.1.5 以 `v3.1.5/` 目录与 tag `v3.1.5` 保留，并创建 GitHub Release 作为 **Latest**（`LocModel-Downloader-v3.1.5.exe`、`locmodel-downloader-v3.1.5-src.zip`、`RELEASE_NOTES_v3.1.5.md`）；v3.1.2 及更早版本的目录与既有 Release 资产一律不删、不覆盖，仅 v3.1.1 失去 Latest 标记。
 
 | Release | 资产 |
 | --- | --- |
@@ -383,6 +423,9 @@ c:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:exe /cod
 | `v2.3.0` | `LocModel-Downloader-v2.3.exe`、源码 `locmodel-downloader-v2.3-src.zip`、说明 `RELEASE_NOTES_v2.3.md` |
 | `v3.1.0` | `LocModel-Downloader-v3.1.0.exe`、源码 `locmodel-downloader-v3.1.0-src.zip`、说明 `RELEASE_NOTES_v3.1.0.md` |
 | `v3.1.1` | `LocModel-Downloader-v3.1.1.exe`、源码 `locmodel-downloader-v3.1.1-src.zip`、说明 `RELEASE_NOTES_v3.1.1.md` |
+| `v3.1.5` | `LocModel-Downloader-v3.1.5.exe`、源码 `locmodel-downloader-v3.1.5-src.zip`、说明 `RELEASE_NOTES_v3.1.5.md` |
+
+v3.1.2 与 v3.1.3 **只有仓库目录**（`v3.1.2/`、`v3.1.3/` + 根目录 exe / src.zip / RELEASE_NOTES），未打 tag、未创建 Release。
 
 ---
 
